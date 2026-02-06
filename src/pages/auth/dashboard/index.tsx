@@ -11,9 +11,8 @@ import {
   SpaceBetween,
   Button,
   Box,
-  SideNavigation,
   Flashbar,
-  type FlashbarProps
+  type FlashbarProps,
 } from '@cloudscape-design/components';
 
 // --- IMPORTACIONES LOCALES ---
@@ -22,9 +21,11 @@ import type { WidgetDataType } from './interfaces';
 import { DashboardPalette } from './palette';
 import { boardI18nStrings } from './board-i18n';
 
-// Importamos el nuevo componente
-import Navbar from '../../layouts/navbar/Navbar'; // Ajusta la ruta si es necesario
-import GlobalSidebar from '../../layouts/sidebar/Sidebar'; // <--- EL NUEVO SLIDER
+// --- TUS COMPONENTES ---
+import Navbar from '../../layouts/navbar/Navbar';
+import GlobalSidebar from '../../layouts/sidebar/Sidebar';
+// CORRECCIÓN 1: Asegura la ruta correcta a tu Footer
+import { Footer } from '@/pages/layouts/Footer';
 
 // --- UTILIDADES ---
 function useWindowWidth() {
@@ -37,9 +38,9 @@ function useWindowWidth() {
     };
     window.addEventListener('resize', handleResize);
     return () => {
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(timeoutId);
-    }
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, []);
   return width;
 }
@@ -50,8 +51,7 @@ export default function DashboardFeature() {
   // Estados UI Básicos
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(false);
-  const [activeHref, setActiveHref] = useState('#/dashboard');
-  
+
   // --- DASHBOARD ITEMS Y WIDGETS ---
   const [items, setItems] = useState<BoardProps.Item<WidgetDataType>[]>(() => {
     const savedLayout = localStorage.getItem('dashboard-layout-v11');
@@ -59,59 +59,85 @@ export default function DashboardFeature() {
       try {
         const parsedLayout = JSON.parse(savedLayout);
         return parsedLayout.map((item: any) => {
-           const config = allWidgets[item.id];
-           return { ...item, data: { title: config?.title || 'Widget', provider: config?.provider, disableContentPaddings: false } };
+          const config = allWidgets[item.id];
+          // Validación extra por si la config no existe
+          if (!config) return item;
+          return {
+            ...item,
+            data: {
+              title: config.title || 'Widget',
+              provider: config.provider,
+              disableContentPaddings: false,
+            },
+          };
         });
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+      }
     }
     return getBoardWidgets(getDefaultLayout(window.innerWidth));
   });
 
-  const [flashbarItems, setFlashbarItems] = useState<FlashbarProps.MessageDefinition[]>([
+  const [flashbarItems, setFlashbarItems] = useState<
+    FlashbarProps.MessageDefinition[]
+  >([
     {
-      type: "info",
+      type: 'info',
       dismissible: true,
-      content: "Panel sincronizado.",
-      id: "message_1",
-      onDismiss: () => setFlashbarItems([]) 
-    }
+      content: 'Panel sincronizado.',
+      id: 'message_1',
+      onDismiss: () => setFlashbarItems([]),
+    },
   ]);
 
-  const handleItemsChange = useCallback((event: CustomEvent<BoardProps.ItemsChangeDetail<WidgetDataType>>) => {
-    setItems(event.detail.items);
-  }, []);
+  const handleItemsChange = useCallback(
+    (event: CustomEvent<BoardProps.ItemsChangeDetail<WidgetDataType>>) => {
+      setItems(event.detail.items);
+    },
+    [],
+  );
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-        const layoutToSave = items.map(item => ({ id: item.id, columnSpan: item.columnSpan, rowSpan: item.rowSpan }));
-        localStorage.setItem('dashboard-layout-v11', JSON.stringify(layoutToSave));
+      const layoutToSave = items.map((item) => ({
+        id: item.id,
+        columnSpan: item.columnSpan,
+        rowSpan: item.rowSpan,
+      }));
+      localStorage.setItem(
+        'dashboard-layout-v11',
+        JSON.stringify(layoutToSave),
+      );
     }, 500);
     return () => clearTimeout(timeout);
   }, [items]);
 
   const handleAddWidget = useCallback((widgetId: string) => {
     const widgetConfig = allWidgets[widgetId];
-    setItems(prev => [...prev, {
-      id: widgetId,
-      rowSpan: widgetConfig.definition?.defaultRowSpan || 2,
-      columnSpan: widgetConfig.definition?.defaultColumnSpan || 1,
-      data: { title: widgetConfig.title || 'Widget', provider: widgetConfig.provider, disableContentPaddings: false }
-    }]);
+    if (!widgetConfig) return; // Protección contra errores
+    setItems((prev) => [
+      ...prev,
+      {
+        id: widgetId,
+        rowSpan: widgetConfig.definition?.defaultRowSpan || 2,
+        columnSpan: widgetConfig.definition?.defaultColumnSpan || 1,
+        data: {
+          title: widgetConfig.title || 'Widget',
+          provider: widgetConfig.provider,
+          disableContentPaddings: false,
+        },
+      },
+    ]);
   }, []);
 
   const handleReset = useCallback(() => {
-      setItems(getBoardWidgets(getDefaultLayout(windowWidth)));
-      localStorage.removeItem('dashboard-layout-v11');
+    setItems(getBoardWidgets(getDefaultLayout(windowWidth)));
+    localStorage.removeItem('dashboard-layout-v11');
   }, [windowWidth]);
 
   return (
-    <div className="dashboard-container"> 
-      <style>{`
-        .dashboard-container { opacity: 0; animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
-
-      {/* AQUÍ LLAMAMOS A TU NUEVO COMPONENTE REUTILIZABLE */}
+    <div className="dashboard-container">
+      {/* Navbar fuera del AppLayout está bien si es global, pero AppLayout maneja el scroll del contenido */}
       <Navbar />
 
       <AppLayout
@@ -122,8 +148,12 @@ export default function DashboardFeature() {
         toolsOpen={toolsOpen}
         onToolsChange={({ detail }) => setToolsOpen(detail.open)}
         toolsWidth={350}
-        tools={<DashboardPalette activeWidgetIds={items.map(i => i.id)} onAddWidget={handleAddWidget} />}
-        toolsHide={false}
+        tools={
+          <DashboardPalette
+            activeWidgetIds={items.map((i) => i.id)}
+            onAddWidget={handleAddWidget}
+          />
+        }
         notifications={<Flashbar items={flashbarItems} />}
         content={
           <ContentLayout
@@ -135,7 +165,13 @@ export default function DashboardFeature() {
                   actions={
                     <SpaceBetween direction="horizontal" size="xs">
                       <Button onClick={handleReset}>Restablecer</Button>
-                      <Button variant="primary" iconName="add-plus" onClick={() => setToolsOpen(true)}>Agregar widgets</Button>
+                      <Button
+                        variant="primary"
+                        iconName="add-plus"
+                        onClick={() => setToolsOpen(true)}
+                      >
+                        Agregar widgets
+                      </Button>
                     </SpaceBetween>
                   }
                 >
@@ -144,35 +180,56 @@ export default function DashboardFeature() {
               </SpaceBetween>
             }
           >
-            <Board
-              items={items}
-              onItemsChange={handleItemsChange}
-              i18nStrings={boardI18nStrings}
-              renderItem={(item, actions) => {
-                const WidgetComponent = item.data.provider; 
-                return (
-                  <BoardItem 
-                    header={<Header>{item.data.title}</Header>}
-                    i18nStrings={{
-                      dragHandleAriaLabel: "Arrastrar widget",
-                      resizeHandleAriaLabel: "Redimensionar widget",
-                      resizeHandleAriaDescription: "Enter para redimensionar, Esc para cancelar",
-                    }}
-                    settings={
-                      <Button variant="icon" iconName="close" ariaLabel="Quitar" onClick={() => actions.removeItem()} />
-                    }
-                  >
-                    <WidgetComponent />
-                  </BoardItem>
-                );
-              }}
-              empty={
-                <Box textAlign="center" padding="l">
-                  <Box variant="strong" color="text-body-secondary">Sin widgets</Box>
-                  <Button onClick={() => setToolsOpen(true)}>Agregar widgets</Button>
-                </Box>
-              }
-            />
+            {/* CORRECCIÓN 2: Usamos SpaceBetween para separar el Board del Footer */}
+            <SpaceBetween size="xxl">
+              <Board
+                items={items}
+                onItemsChange={handleItemsChange}
+                i18nStrings={boardI18nStrings}
+                renderItem={(item, actions) => {
+                  const WidgetComponent = item.data.provider;
+                  // Protección: si el provider es undefined, no renderizar para evitar crash
+                  if (!WidgetComponent) return <></>;
+
+                  return (
+                    <BoardItem
+                      header={<Header>{item.data.title}</Header>}
+                      i18nStrings={{
+                        dragHandleAriaLabel: 'Arrastrar widget',
+                        resizeHandleAriaLabel: 'Redimensionar widget',
+                        resizeHandleAriaDescription:
+                          'Enter para redimensionar, Esc para cancelar',
+                      }}
+                      settings={
+                        <Button
+                          variant="icon"
+                          iconName="close"
+                          ariaLabel="Quitar"
+                          onClick={() => actions.removeItem()}
+                        />
+                      }
+                    >
+                      <WidgetComponent />
+                    </BoardItem>
+                  );
+                }}
+                empty={
+                  <Box textAlign="center" padding="l">
+                    <Box variant="strong" color="text-body-secondary">
+                      Sin widgets
+                    </Box>
+                    <Button onClick={() => setToolsOpen(true)}>
+                      Agregar widgets
+                    </Button>
+                  </Box>
+                }
+              />
+
+              {/* CORRECCIÓN 3: Footer DENTRO del flujo de contenido */}
+              <Box margin={{ top: 'xxl' }}>
+                <Footer />
+              </Box>
+            </SpaceBetween>
           </ContentLayout>
         }
       />

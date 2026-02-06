@@ -1,6 +1,11 @@
-import axios from "axios";
-import { createContext, useState, ReactNode, useEffect } from "react";
-import { toast } from "react-toastify";
+import axios from 'axios';
+import { createContext, useState, ReactNode, useEffect } from 'react';
+import { toast } from 'react-toastify';
+// --- Cloudscape Imports para manejo global de estilos ---
+import { applyMode, Mode } from '@cloudscape-design/global-styles';
+
+// Definir el tipo de tema
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 // Definir el tipo de usuario con el rol incluido
 interface UserData {
@@ -18,9 +23,12 @@ interface AppContextType {
   setIsLoggedin: (value: boolean) => void;
   userData: UserData | null;
   setUserData: (value: UserData | null) => void;
-  theme: string;
-  toggleTheme: () => void; 
   getUserData: () => Promise<void>;
+
+  // --- Nuevas propiedades para el Tema Global ---
+  theme: ThemeMode; // Usamos 'theme' o 'mode' según prefieras, aquí lo estandarizamos
+  isDark: boolean; // Booleano calculado listo para usar en tus vistas (Login, Verify, etc)
+  toggleTheme: () => void;
 }
 
 // Crear el contexto con un valor por defecto
@@ -32,30 +40,63 @@ interface AppContextProviderProps {
 
 export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   axios.defaults.withCredentials = true;
-  const backendUrl = import.meta.env.VITE_BACKEND_URL as string; 
+  const backendUrl = import.meta.env.VITE_BACKEND_URL as string;
 
+  // --- Estados de Autenticación ---
   const [isLoggedin, setIsLoggedin] = useState<boolean>(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [theme, setTheme] = useState<string>('light'); 
 
+  // --- Estados de Tema ---
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    return (localStorage.getItem('theme') as ThemeMode) || 'system';
+  });
+  const [isDark, setIsDark] = useState(false);
+
+  // Efecto para controlar el cambio de tema (Claro/Oscuro/Sistema)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyTheme = () => {
+      let shouldBeDark = false;
+      if (theme === 'system') {
+        shouldBeDark = mediaQuery.matches;
+      } else {
+        shouldBeDark = theme === 'dark';
+      }
+
+      setIsDark(shouldBeDark);
+      const root = window.document.documentElement;
+
+      // Aplicar clases para Tailwind y Cloudscape
+      if (shouldBeDark) {
+        root.classList.add('dark');
+        applyMode(Mode.Dark);
+      } else {
+        root.classList.remove('dark');
+        applyMode(Mode.Light);
+      }
+    };
+
+    applyTheme(); // Ejecutar al montar
+
+    const listener = () => {
+      if (theme === 'system') applyTheme();
+    };
+    mediaQuery.addEventListener('change', listener);
+
+    localStorage.setItem('theme', theme);
+
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, [theme]);
+
+  // Función para alternar el tema (usada en el botón del header)
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.className = newTheme;
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
   };
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.className = savedTheme;
-    } else {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setTheme(systemTheme);
-      document.documentElement.className = systemTheme;
-    }
-  }, []);
+  // --- Lógica de Usuario (INTACTA) ---
 
   // Función para verificar si el usuario está autenticado y obtener sus datos
   const getAuthState = async () => {
@@ -66,7 +107,7 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
         getUserData();
       }
     } catch (error: any) {
-      toast.error(error.message);
+      // toast.error(error.message); // Opcional silenciar en carga inicial
     }
   };
 
@@ -75,12 +116,12 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     try {
       const { data } = await axios.get(`${backendUrl}/api/user/data`);
       if (data.success) {
-        setUserData(data.userData); 
+        setUserData(data.userData);
         setIsLoggedin(true);
       } else {
         setUserData(null);
         setIsLoggedin(false);
-        toast.error(data.message);
+        // toast.error(data.message);
       }
     } catch (error: any) {
       setUserData(null);
@@ -99,9 +140,11 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     setIsLoggedin,
     userData,
     setUserData,
+    getUserData,
+    // Exportamos el tema
     theme,
+    isDark,
     toggleTheme,
-    getUserData
   };
 
   return <AppContent.Provider value={value}>{children}</AppContent.Provider>;

@@ -12,7 +12,7 @@ export default function GlobalSidebar() {
       // 1. Detección automática: Compara la URL actual con los items
       activeHref={location.pathname}
       
-      header={{ href: "/dashboard", text: "OmniPart Servicios" }}
+      header={{ href: "/dashboard", text: "QuickFind Servicios" }}
       
       items={navItems}
       

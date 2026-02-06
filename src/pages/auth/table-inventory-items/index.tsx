@@ -1,5 +1,4 @@
-import * as React from "react";
-// 1. Imports de Cloudscape
+import * as React from 'react';
 import {
   Table,
   Box,
@@ -10,249 +9,328 @@ import {
   Pagination,
   CollectionPreferences,
   Select,
-  AppLayout,       // <--- CRUCIAL: El layout principal
-  BreadcrumbGroup, // <--- Las migas de pan (ruta superior)
-  Flashbar,        // <--- Las barras de notificación azul/verde
-  StatusIndicator, // <--- Para los circulitos de estado
-  Link             // <--- Para simular links en la tabla
-} from "@cloudscape-design/components";
+  AppLayout,
+  Flashbar,
+  StatusIndicator,
+  Link,
+} from '@cloudscape-design/components';
+import { useCollection } from '@cloudscape-design/collection-hooks';
 
-import type { TableProps, SelectProps } from "@cloudscape-design/components";
-import { useCollection } from "@cloudscape-design/collection-hooks";
+// --- IMPORTANTE: AJUSTA LAS RUTAS SI ES NECESARIO ---
+import Navbar from '../../layouts/navbar/Navbar';
+import GlobalSidebar from '../../layouts/sidebar/Sidebar';
+import RouteTracker from '../../layouts/RouteTracker';
 
-// Imports de tus componentes
-import Navbar from '../../layouts/navbar/Navbar'; 
-import GlobalSidebar from '../../layouts/sidebar/Sidebar'; 
+// --- CORRECCIÓN DEL ERROR DE IMPORTACIÓN ---
+// Importamos los valores normales
+import { useInventory, CATEGORY_OPTIONS } from '@/hooks/use-inventory';
+// Importamos la interfaz COMO TIPO para evitar el SyntaxError
+import type { InventoryItem } from '@/hooks/use-inventory';
 
-// --- DATOS Y CONFIGURACIÓN ---
+// --- CSS ESTILO AWS "CÁPSULA" (SIN SALTOS) ---
+const awsCustomStyles = `
+  /* 1. SEPARACIÓN */
+  .awsui-table-container table {
+    border-collapse: separate !important; 
+    border-spacing: 0 4px !important;
+  }
+  
+  /* 2. LIMPIEZA */
+  .awsui-table-container td {
+    border: none !important;
+  }
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  status: "Available" | "Out of Stock" | "Discontinued";
-  quantity: number;
-  lastUpdated: string;
-}
+  /* 3. SELECCIÓN ESTILO CÁPSULA (USANDO SHADOW INSET) */
+  /* Fondo y líneas superior/inferior */
+  tr[class*="awsui_row-selected_"] > td {
+    background-color: #f1faff !important;
+    color: #16191f !important;
+    box-shadow: inset 0 2px 0 0 #0972d3, inset 0 -2px 0 0 #0972d3 !important;
+  }
 
-const COLUMN_DEFINITIONS: TableProps.ColumnDefinition<InventoryItem>[] = [
+  /* ESQUINA IZQUIERDA: Redondeo + Línea Izquierda */
+  tr[class*="awsui_row-selected_"] > td:first-child {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+    box-shadow: inset 2px 0 0 0 #0972d3, inset 0 2px 0 0 #0972d3, inset 0 -2px 0 0 #0972d3 !important;
+  }
+
+  /* ESQUINA DERECHA: Redondeo + Línea Derecha */
+  tr[class*="awsui_row-selected_"] > td:last-child {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    box-shadow: inset -2px 0 0 0 #0972d3, inset 0 2px 0 0 #0972d3, inset 0 -2px 0 0 #0972d3 !important;
+  }
+
+  /* 4. MODO OSCURO */
+  @media (prefers-color-scheme: dark) {
+    tr[class*="awsui_row-selected_"] > td {
+      background-color: rgba(9, 114, 211, 0.15) !important;
+      color: #ffffff !important;
+    }
+    tr[class*="awsui_row-selected_"] a {
+      color: #7aadf3 !important;
+    }
+  }
+`;
+
+// --- DEFINICIÓN DE COLUMNAS (Tipado correcto) ---
+const COLUMN_DEFINITIONS = [
   {
-    id: "name",
-    header: "Nombre del Producto",
-    // Usamos Link para que se vea azul como en la captura
-    cell: item => <Link href={`#${item.id}`}>{item.name}</Link>,
-    sortingField: "name",
-    isRowHeader: true
+    id: 'name',
+    header: 'Nombre del Producto',
+    cell: (item: InventoryItem) => (
+      <Link variant="primary" href={`#${item.id}`}>
+        {item.name}
+      </Link>
+    ),
+    sortingField: 'name',
+    isRowHeader: true,
+    minWidth: 200,
   },
   {
-    id: "category",
-    header: "Categoría",
-    cell: item => item.category,
-    sortingField: "category"
+    id: 'category',
+    header: 'Categoría',
+    cell: (item: InventoryItem) => item.category,
+    sortingField: 'category',
+    minWidth: 150,
   },
   {
-    id: "status",
-    header: "Estado",
-    // StatusIndicator replica los iconos rojo/verde de la captura
-    cell: item => (
-      <StatusIndicator type={item.status === "Available" ? "success" : "error"}>
+    id: 'status',
+    header: 'Estado',
+    cell: (item: InventoryItem) => (
+      <StatusIndicator
+        type={
+          item.status === 'Available'
+            ? 'success'
+            : item.status === 'Out of Stock'
+              ? 'error'
+              : 'warning'
+        }
+      >
         {item.status}
       </StatusIndicator>
     ),
-    sortingField: "status"
+    sortingField: 'status',
+    minWidth: 140,
   },
   {
-    id: "quantity",
-    header: "Cantidad",
-    cell: item => item.quantity,
-    sortingField: "quantity"
+    id: 'quantity',
+    header: 'Cantidad',
+    cell: (item: InventoryItem) => item.quantity,
+    sortingField: 'quantity',
+    minWidth: 100,
   },
   {
-    id: "lastUpdated",
-    header: "Última Actualización",
-    cell: item => item.lastUpdated,
-    sortingField: "lastUpdated"
-  }
+    id: 'lastUpdated',
+    header: 'Última Actualización',
+    cell: (item: InventoryItem) => item.lastUpdated,
+    sortingField: 'lastUpdated',
+    minWidth: 160,
+  },
 ];
-
-const MOCK_INVENTORY: InventoryItem[] = [
-  { id: "1", name: "Servidor Rack 4U", category: "Hardware", status: "Available", quantity: 15, lastUpdated: "2024-01-20" },
-  { id: "2", name: "Cable Óptico 10m", category: "Accesorios", status: "Out of Stock", quantity: 0, lastUpdated: "2024-01-18" },
-  { id: "3", name: "Switch Gestionable", category: "Redes", status: "Available", quantity: 8, lastUpdated: "2024-01-19" },
-  { id: "4", name: "Licencia Software", category: "Software", status: "Available", quantity: 50, lastUpdated: "2024-01-15" },
-  { id: "5", name: "Router Industrial", category: "Redes", status: "Discontinued", quantity: 2, lastUpdated: "2023-12-10" },
-  { id: "6", name: "Panel Patch", category: "Accesorios", status: "Available", quantity: 25, lastUpdated: "2024-01-21" },
-];
-
-const CATEGORY_OPTIONS = [
-  { label: "Todas las categorías", value: undefined },
-  { label: "Hardware", value: "Hardware" },
-  { label: "Redes", value: "Redes" },
-  { label: "Accesorios", value: "Accesorios" },
-  { label: "Software", value: "Software" }
-];
-
-// --- COMPONENTE PRINCIPAL ---
 
 export default function InventoryTable() {
-  const [selectedItems, setSelectedItems] = React.useState<InventoryItem[]>([]);
-  const [categoryFilter, setCategoryFilter] = React.useState<SelectProps.Option | null>(CATEGORY_OPTIONS[0]);
+  const { items: inventoryItems, loading } = useInventory();
 
-  const { items, actions, filteredItemsCount, collectionProps, paginationProps, filterProps } = useCollection(
-    MOCK_INVENTORY,
-    {
-      pagination: { pageSize: 10 },
-      sorting: { defaultState: { sortingColumn: COLUMN_DEFINITIONS[0] } },
-      selection: {},
-      filtering: {
-        empty: (
-          <Box textAlign="center" color="inherit">
-            <b>No hay items</b>
-            <Box padding={{ bottom: "s" }} variant="p" color="inherit">
-              No se encontraron recursos.
-            </Box>
-          </Box>
-        ),
-        noMatch: (
-          <Box textAlign="center" color="inherit">
-            <b>No hay coincidencias</b>
-            <Box padding={{ bottom: "s" }} variant="p" color="inherit">
-              Intenta borrar el filtro.
-            </Box>
-            <Button onClick={() => actions.setFiltering("")}>Borrar filtro</Button>
-          </Box>
-        ),
-        filteringFunction: (item, filteringText) => {
-          const matchesText = item.name.toLowerCase().includes(filteringText.toLowerCase());
-          const matchesCategory = categoryFilter?.value 
-            ? item.category === categoryFilter.value 
-            : true;
-          return matchesText && matchesCategory;
-        }
-      },
-    }
+  const [selectedItems, setSelectedItems] = React.useState<InventoryItem[]>([]);
+  const [categoryFilter, setCategoryFilter] = React.useState(
+    CATEGORY_OPTIONS[0],
   );
+  const [toolsOpen, setToolsOpen] = React.useState(false);
+
+  // --- PREFERENCIAS (Estado para el engranaje) ---
+  const [preferences, setPreferences] = React.useState({
+    pageSize: 50, // 50 items por defecto
+    visibleContent: ['name', 'category', 'status', 'quantity', 'lastUpdated'],
+  });
+
+  const {
+    items,
+    actions,
+    filteredItemsCount,
+    collectionProps,
+    paginationProps,
+    filterProps,
+  } = useCollection(inventoryItems, {
+    pagination: { pageSize: preferences.pageSize },
+    sorting: {},
+    selection: {},
+    filtering: {
+      filteringFunction: (item, text) => {
+        const matchesText = item.name
+          .toLowerCase()
+          .includes(text.toLowerCase());
+        const matchesCategory = categoryFilter?.value
+          ? item.category === categoryFilter.value
+          : true;
+        return matchesText && matchesCategory;
+      },
+    },
+  });
 
   return (
-    <>
-      {/* 1. Navbar fuera del AppLayout */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <style>{awsCustomStyles}</style>
       <Navbar />
-      
-      {/* 2. AppLayout maneja toda la estructura (Sidebar, Breadcrumbs, Notificaciones, Contenido) */}
+
       <AppLayout
         navigation={<GlobalSidebar />}
-        toolsHide={true} // Ocultamos el panel derecho para igualar la captura
-        
-        // MIGAS DE PAN (Ruta superior)
-        breadcrumbs={
-          <BreadcrumbGroup
-            items={[
-              { text: "Service", href: "#" },
-              { text: "Dashboard", href: "#" },
-              { text: "Instances", href: "#" }
-            ]}
-          />
-        }
-
-        // NOTIFICACIONES (Barras Azul y Verde)
+        contentType="table"
+        stickyHeader={true}
+        toolsOpen={toolsOpen}
+        onToolsChange={({ detail }) => setToolsOpen(detail.open)}
         notifications={
           <Flashbar
             items={[
               {
-                type: "info",
+                type: 'success',
+                content: 'Inventario cargado correctamente.',
                 dismissible: true,
-                content: "Esta demostración es un ejemplo de los patrones de Cloudscape Design System.",
-                id: "message_1"
+                id: 'success_msg',
               },
               {
-                type: "success",
+                type: 'info',
+                content: 'Sistema funcionando en modo local.',
                 dismissible: true,
-                content: "Recurso creado exitosamente",
-                id: "message_2"
-              }
+                id: 'info_msg',
+              },
             ]}
           />
         }
-
-        // CONTENIDO PRINCIPAL (La Tabla)
+        breadcrumbs={
+          <RouteTracker
+            items={[
+              { text: 'Almacén', href: '#' },
+              { text: 'Inventario General', href: '/inventory' },
+            ]}
+          />
+        }
+        tools={
+          <Box padding="m">
+            <Header variant="h2">Ayuda</Header>
+            <Box variant="p">Gestiona los activos del sistema.</Box>
+          </Box>
+        }
         content={
           <Table
             {...collectionProps}
-            selectedItems={selectedItems}
-            onSelectionChange={({ detail }) => setSelectedItems(detail.selectedItems as InventoryItem[])}
-            ariaLabels={{
-              selectionGroupLabel: "Selección de items",
-              allItemsSelectionLabel: ({ selectedItems }) => `${selectedItems.length} seleccionados`,
-              itemSelectionLabel: ({ selectedItems }, item) => item.name
-            }}
-            columnDefinitions={COLUMN_DEFINITIONS}
             items={items}
-            selectionType="multi" // Checkboxes a la izquierda
-            variant="full-page"   // Estilo plano integrado al fondo
+            selectedItems={selectedItems}
+            onSelectionChange={({ detail }) =>
+              setSelectedItems(detail.selectedItems as InventoryItem[])
+            }
+            selectionType="multi"
+            variant="full-page"
             stickyHeader={true}
-            
-            // CABECERA DE LA TABLA
+            resizableColumns={true}
+            loading={loading}
+            // CONEXIÓN DE COLUMNAS (ColumnDefinitions + VisibleColumns)
+            columnDefinitions={COLUMN_DEFINITIONS}
+            visibleColumns={preferences.visibleContent}
             header={
               <Header
-                counter={`(${items.length})`}
-                info={<Link variant="info">Info</Link>} // Link "Info" pequeño
+                variant="h1"
+                counter={
+                  selectedItems.length > 0
+                    ? `(${selectedItems.length}/${items.length})`
+                    : `(${items.length})`
+                }
+                info={
+                  <Link variant="info" onClick={() => setToolsOpen(true)}>
+                    Info
+                  </Link>
+                }
                 actions={
                   <SpaceBetween direction="horizontal" size="xs">
-                    <Button disabled={selectedItems.length === 0}>Instance actions</Button>
-                    <Button disabled={selectedItems.length === 0}>Restore from S3</Button>
-                    <Button variant="primary">Launch DB instance</Button>
+                    <Button disabled={selectedItems.length === 0}>
+                      Ver detalles
+                    </Button>
+                    <Button disabled={selectedItems.length === 0}>
+                      Editar
+                    </Button>
+                    <Button disabled={selectedItems.length === 0}>
+                      Borrar
+                    </Button>
+                    <Button variant="primary">Crear nuevo</Button>
                   </SpaceBetween>
                 }
               >
-                Instances
+                Inventario General
               </Header>
             }
-
-            // FILTROS
-            filter={
-              <SpaceBetween direction="horizontal" size="s" alignItems="center">
-                <div style={{ flexGrow: 1, maxWidth: '400px' }}>
-                  <TextFilter
-                    {...filterProps}
-                    filteringPlaceholder="Find instances"
-                    countText={`${filteredItemsCount} coincidencias`}
-                  />
-                </div>
-                <div style={{ width: 200 }}>
-                   <Select
-                      selectedOption={categoryFilter}
-                      onChange={({ detail }) => {
-                          setCategoryFilter(detail.selectedOption);
-                          actions.setFiltering(filterProps.filteringText); 
-                      }}
-                      options={CATEGORY_OPTIONS}
-                      placeholder="Filter engine"
-                      ariaLabel="Categoría"
-                    />
-                </div>
-              </SpaceBetween>
-            }
-            
-            pagination={<Pagination {...paginationProps} />}
-            
+            // CONFIGURACIÓN DEL ENGRANAJE (PREFERENCIAS)
             preferences={
               <CollectionPreferences
                 title="Preferencias"
                 confirmLabel="Confirmar"
                 cancelLabel="Cancelar"
-                preferences={{ pageSize: 10, visibleContent: ["name", "category", "status", "quantity", "lastUpdated"] }}
+                preferences={preferences}
+                onConfirm={({ detail }) => setPreferences(detail)}
                 pageSizePreference={{
-                  title: "Tamaño de página",
+                  title: 'Tamaño de página',
                   options: [
-                    { value: 10, label: "10 recursos" },
-                    { value: 20, label: "20 recursos" }
-                  ]
+                    { value: 10, label: '10 recursos' },
+                    { value: 30, label: '30 recursos' },
+                    { value: 50, label: '50 recursos' },
+                  ],
+                }}
+                contentDisplayPreference={{
+                  title: 'Columnas visibles',
+                  options: [
+                    {
+                      id: 'properties',
+                      label: 'Datos del Recurso',
+                      options: [
+                        {
+                          id: 'name',
+                          label: 'Nombre del Producto',
+                          alwaysVisible: true,
+                        },
+                        { id: 'category', label: 'Categoría' },
+                        { id: 'status', label: 'Estado' },
+                        { id: 'quantity', label: 'Cantidad' },
+                        { id: 'lastUpdated', label: 'Última Actualización' },
+                      ],
+                    },
+                  ],
                 }}
               />
             }
+            filter={
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'center',
+                  width: '100%',
+                }}
+              >
+                <div style={{ flexGrow: 1 }}>
+                  <TextFilter
+                    {...filterProps}
+                    filteringPlaceholder="Buscar por nombre..."
+                    countText={`${filteredItemsCount} coincidencias`}
+                  />
+                </div>
+                <div style={{ minWidth: '200px' }}>
+                  <Select
+                    selectedOption={categoryFilter}
+                    onChange={({ detail }) => {
+                      setCategoryFilter(detail.selectedOption);
+                      actions.setFiltering(filterProps.filteringText);
+                    }}
+                    options={CATEGORY_OPTIONS}
+                    placeholder="Categoría"
+                    ariaLabel="Filtrar por categoría"
+                  />
+                </div>
+              </div>
+            }
+            pagination={<Pagination {...paginationProps} />}
           />
         }
       />
-    </>
+    </div>
   );
 }

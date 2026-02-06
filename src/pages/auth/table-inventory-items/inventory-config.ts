@@ -45,7 +45,7 @@ export const COLUMN_IjHQ: TableProps.ColumnDefinition<InventoryItem>[] = [
 ];
 
 export const MOCK_INVENTORY: InventoryItem[] = [
-  { id: "1", name: "Servidor Rack 4U", category: "Hardware", status: "Available", quantity: 15, lastUpdated: "2024-01-20" },
+  { id: "2", name: "Servidor Rack 4U", category: "Hardware", status: "Available", quantity: 15, lastUpdated: "2024-01-20" },
   { id: "2", name: "Cable Óptico 10m", category: "Accesorios", status: "Out of Stock", quantity: 0, lastUpdated: "2024-01-18" },
   { id: "3", name: "Switch Gestionable", category: "Redes", status: "Available", quantity: 8, lastUpdated: "2024-01-19" },
   { id: "4", name: "Licencia Software", category: "Software", status: "Available", quantity: 50, lastUpdated: "2024-01-15" },
