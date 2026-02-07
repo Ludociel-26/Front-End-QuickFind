@@ -11,7 +11,7 @@ import { Button } from '@cloudscape-design/components';
 
 // --- Icons & Assets ---
 import { Sun, Moon, Monitor, ArrowLeft, ShieldCheck } from 'lucide-react';
-import logo from '@/assets/icons/logo_del_monte.png';
+import logo from '@/assets/icons/appiconf.png';
 import backgroundImage from '@/assets/login/loginBg.png';
 
 // ------------------------------------------------------------------

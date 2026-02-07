@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { TopNavigation, Input } from '@cloudscape-design/components';
-import {
-  applyMode,
-  applyDensity,
-  Mode,
-  Density,
-} from '@cloudscape-design/global-styles';
-import LOGO_IMAGE from '@/assets/icons/logo_del_monte.png';
+import { applyDensity, Density } from '@cloudscape-design/global-styles';
+
+// CORRECCIÓN: Importamos AppContent Y ThemeMode
+import { AppContent } from '@/context/AppContext';
+import type { ThemeMode } from '@/context/AppContext'; // Importación de tipo segura
+
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
+import LOGO_IMAGE from '@/assets/icons/appiconf.png';
 import './navbar.css';
 
-// DATOS DE EJEMPLO
 const REFACCIONES_DATA = [
   {
     id: 1,
@@ -46,16 +48,60 @@ const useIsMac = () => {
 };
 
 export default function GlobalHeader() {
-  const isMac = useIsMac();
-  const [isUserLoading, setIsUserLoading] = useState(true);
-  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // BUSCADOR
+  const {
+    userData,
+    backendUrl,
+    setIsLoggedin,
+    setUserData,
+    isLoggedin,
+    setTheme,
+  } = useContext(AppContent) || {};
+
+  const isMac = useIsMac();
   const [searchValue, setSearchValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    try {
+      if (backendUrl) {
+        axios.defaults.withCredentials = true;
+        const { data } = await axios.post(`${backendUrl}/api/auth/logout`);
+        if (data.success && setIsLoggedin && setUserData) {
+          setIsLoggedin(false);
+          setUserData(null);
+          toast.info('Sesión cerrada correctamente');
+          navigate('/');
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleSendVerification = async () => {
+    try {
+      if (backendUrl) {
+        axios.defaults.withCredentials = true;
+        const { data } = await axios.post(
+          `${backendUrl}/api/auth/send-verify-otp`,
+        );
+
+        if (data.success) {
+          toast.success('Código enviado. Por favor verifica tu cuenta.');
+          navigate('/verify-email');
+        } else {
+          toast.error(data.message);
+        }
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,13 +118,6 @@ export default function GlobalHeader() {
   }, []);
 
   useEffect(() => {
-    setTimeout(() => {
-      setIsUserLoading(false);
-      setUserAvatarUrl('');
-    }, 3000);
-  }, []);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 's') {
         event.preventDefault();
@@ -90,27 +129,17 @@ export default function GlobalHeader() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // --- LÓGICA DE TEMA Y DENSIDAD (CORREGIDA) ---
+  // Solo control de Densidad (El tema lo maneja AppContext)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
     const savedDensity = localStorage.getItem('density');
-
-    // 1. DEFAULT A COMPACTO (Como pediste)
     if (savedDensity === 'comfortable') applyDensity(Density.Comfortable);
-    else applyDensity(Density.Compact); // Default Compacto
-
-    // 2. TEMA
-    if (savedTheme === 'light') applyMode(Mode.Light);
-    else if (savedTheme === 'dark') applyMode(Mode.Dark);
-    else applyMode(Mode.Dark); // Default visual (puedes cambiar a System si prefieres)
+    else applyDensity(Density.Compact);
   }, []);
 
-  // Handlers directos
   const handleThemeSelect = (id: string) => {
-    if (id === 'light') applyMode(Mode.Light);
-    if (id === 'dark') applyMode(Mode.Dark);
-    if (id === 'system') applyMode(Mode.Dark); // O usar lógica de sistema real
-    localStorage.setItem('theme', id);
+    if (setTheme && ['light', 'dark', 'system'].includes(id)) {
+      setTheme(id as ThemeMode);
+    }
   };
 
   const handleDensitySelect = (id: string) => {
@@ -119,16 +148,33 @@ export default function GlobalHeader() {
     localStorage.setItem('density', id);
   };
 
+  const userMenuItems = [
+    { id: 'profile', text: 'Mi Perfil', iconName: 'user-profile' },
+  ];
+
+  if (userData && !userData.isAccountVerified) {
+    userMenuItems.push({
+      id: 'verify-email',
+      text: 'Verificar cuenta',
+      iconName: 'status-warning',
+    });
+  }
+
+  userMenuItems.push({
+    id: 'signout',
+    text: 'Cerrar sesión',
+    iconName: 'angle-right-double',
+  });
+
   return (
     <div id="h" style={{ position: 'sticky', top: 0, zIndex: 1002 }}>
       <TopNavigation
         identity={{
           href: '#',
-          title: 'OmniPart',
+          title: 'QuickFind',
           logo: { src: LOGO_IMAGE, alt: 'Logo' },
         }}
         search={
-          // CONTENEDOR 850px CENTRADO
           <div
             ref={containerRef}
             style={{
@@ -147,7 +193,6 @@ export default function GlobalHeader() {
               }}
             >
               <div className="inner-mask"></div>
-
               <div className="search-content-wrapper">
                 <div className="search-icon">
                   <svg
@@ -164,7 +209,6 @@ export default function GlobalHeader() {
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                   </svg>
                 </div>
-
                 <div className="cloudscape-input-override">
                   <Input
                     ref={searchInputRef}
@@ -177,13 +221,12 @@ export default function GlobalHeader() {
                       setIsFocused(true);
                       if (searchValue) setShowSuggestions(true);
                     }}
-                    placeholder="Buscar refacciones (ej. Balatas, Filtros)..."
+                    placeholder="Buscar refacciones (ej. Sensores, Motores)..."
                     type="text"
                     disableBrowserAutocorrect
                   />
                 </div>
               </div>
-
               <div className="search-shortcuts">
                 <span className="kbd-key">{isMac ? '⌘' : 'Ctrl'}</span>
                 <span className="plus-char">+</span>
@@ -191,7 +234,6 @@ export default function GlobalHeader() {
               </div>
             </div>
 
-            {/* SUGERENCIAS */}
             {showSuggestions && (
               <div className="suggestions-menu">
                 <div className="suggestions-header">Refacciones Sugeridas</div>
@@ -210,13 +252,6 @@ export default function GlobalHeader() {
                     />
                   </div>
                 ))}
-                {REFACCIONES_DATA.filter((i) =>
-                  i.title.toLowerCase().includes(searchValue.toLowerCase()),
-                ).length === 0 && (
-                  <div className="no-results">
-                    No encontrado "{searchValue}"
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -224,24 +259,9 @@ export default function GlobalHeader() {
         utilities={[
           {
             type: 'menu-dropdown',
-            iconName: 'view-app',
-            title: 'Apps',
-            ariaLabel: 'Aplicaciones',
-            items: [{ id: 'app1', text: 'Dashboard', href: '#' }],
-          },
-          {
-            type: 'button',
-            iconName: 'notification',
-            title: 'Notificaciones',
-            badge: true,
-            onClick: () => {},
-          },
-          {
-            type: 'menu-dropdown',
             iconName: 'settings',
             ariaLabel: 'Ajustes',
             title: 'Configuración',
-            // --- FIX: DETECCIÓN DE CLICK ---
             onItemClick: (e) => {
               const id = e.detail.id;
               if (['light', 'dark', 'system'].includes(id))
@@ -254,7 +274,6 @@ export default function GlobalHeader() {
                 id: 'theme',
                 text: 'Tema',
                 items: [
-                  // ICONOS CORREGIDOS: Gen-ai (Sol/Brillo), Star (Noche), Monitor (Sistema)
                   { id: 'light', text: 'Claro', iconName: 'gen-ai' },
                   { id: 'dark', text: 'Oscuro', iconName: 'star' },
                   { id: 'system', text: 'Sistema', iconName: 'monitor' },
@@ -264,7 +283,6 @@ export default function GlobalHeader() {
                 id: 'density',
                 text: 'Densidad',
                 items: [
-                  // ICONOS CORREGIDOS: Full (Cómoda), Vertical (Compacta)
                   { id: 'comfortable', text: 'Cómoda', iconName: 'view-full' },
                   {
                     id: 'compact',
@@ -277,17 +295,24 @@ export default function GlobalHeader() {
           },
           {
             type: 'menu-dropdown',
-            text: 'Carlos Ruiz',
-            description: 'Admin',
-            iconName: isUserLoading ? 'status-in-progress' : 'user-profile',
-            items: [
-              { id: 'profile', text: 'Mi Perfil', iconName: 'user-profile' },
-              {
-                id: 'signout',
-                text: 'Cerrar sesión',
-                iconName: 'angle-right-double',
-              },
-            ],
+            text: isLoggedin && userData ? userData.name : 'Invitado',
+            description:
+              isLoggedin && userData ? userData.email : 'Iniciar sesión',
+            iconName: 'user-profile',
+            onItemClick: (e) => {
+              if (e.detail.id === 'signout') handleLogout();
+              if (e.detail.id === 'verify-email') handleSendVerification();
+              if (e.detail.id === 'login') navigate('/login');
+            },
+            items: isLoggedin
+              ? userMenuItems
+              : [
+                  {
+                    id: 'login',
+                    text: 'Entrar',
+                    iconName: 'user-profile-active-filled',
+                  },
+                ],
           },
         ]}
       />

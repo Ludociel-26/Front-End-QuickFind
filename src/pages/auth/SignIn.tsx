@@ -32,7 +32,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { AppContent } from '@/context/AppContext';
 
 import backgroundImage from '@/assets/login/loginBg.png';
-import LOGO_IMAGE from '@/assets/icons/logo_del_monte.png';
+import LOGO_IMAGE from '@/assets/icons/appiconf.png';
 import bg1 from '@/assets/login/f1.png';
 import bg2 from '@/assets/login/f2.png';
 import bg3 from '@/assets/login/f3.png';
@@ -400,6 +400,7 @@ export default function Login() {
     throw new Error('AppContent must be used within AppContextProvider');
   }
 
+  // Desestructuramos setPageLoading para controlar la barra global
   const {
     theme,
     isDark,
@@ -408,6 +409,7 @@ export default function Login() {
     setIsLoggedin,
     getUserData,
     userData,
+    setPageLoading, // <--- OBTENIDO DEL CONTEXTO
   } = appContext;
 
   // Estados visuales
@@ -477,14 +479,16 @@ export default function Login() {
   const isFormValid =
     strengthPercent === 100 && formData.password === formData.confirmPassword;
 
-  // --- LÓGICA DE SUBMIT ---
+  // --- LÓGICA DE SUBMIT CON EFECTO AWS LOADING ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPageLoading(true); // 1. ACTIVAR LA BARRA INMEDIATAMENTE
+
     try {
       axios.defaults.withCredentials = true;
 
       if (!isLogin) {
-        // REGISTRO (Sin employeeId)
+        // REGISTRO
         const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
           name: formData.name,
           surname: formData.surname,
@@ -495,11 +499,16 @@ export default function Login() {
         });
 
         if (data.success) {
+          // Simular proceso de registro exitoso visualmente
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
           toast.success('Cuenta creada exitosamente');
           setIsLoggedin(true);
           await getUserData();
+          // La barra se apaga al navegar o por el Suspense del router
         } else {
           toast.error(data.message);
+          setPageLoading(false); // Apagar si hay error lógico
         }
       } else {
         // LOGIN
@@ -509,14 +518,20 @@ export default function Login() {
         });
 
         if (data.success) {
+          // 2. ÉXITO: Esperamos 1.5s para que la barra se vea procesando
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          // 3. Actualizamos estado global -> Esto dispara el useEffect de redirección
           setIsLoggedin(true);
           await getUserData();
         } else {
           toast.error(data.message);
+          setPageLoading(false); // Apagar si credenciales incorrectas
         }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
+      setPageLoading(false); // Apagar si hay error de red
     }
   };
 
@@ -527,8 +542,11 @@ export default function Login() {
 
       if (allowedRoles.includes(userData.role)) {
         navigate('/dashboard');
+        // Opcional: setPageLoading(false) aquí,
+        // pero mejor dejamos que el Router maneje la transición.
       } else {
         toast.error('Acceso denegado: Rol no autorizado.');
+        setPageLoading(false);
       }
     }
   }, [userData, navigate]);

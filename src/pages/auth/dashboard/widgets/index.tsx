@@ -9,150 +9,369 @@ import {
   PieChart,
   Table,
   SpaceBetween,
-  Icon
+  Icon,
+  Spinner,
+  Badge,
 } from '@cloudscape-design/components';
-import type { WidgetConfig } from '../interfaces';
 
-// --- WRAPPER OPTIMIZADO PARA EL LAYOUT ---
-// Este componente evita que el contenido interno "salte" visualmente al arrastrar
-const WidgetWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+interface WidgetProps {
+  loading?: boolean;
+}
+
+const DATES = [
+  new Date(2023, 0, 1),
+  new Date(2023, 0, 2),
+  new Date(2023, 0, 3),
+  new Date(2023, 0, 4),
+];
+
+const TRAFFIC_SERIES = [
+  {
+    title: 'Éxito',
+    type: 'area' as const,
+    color: '#1D8102',
+    data: [
+      { x: DATES[0], y: 120 },
+      { x: DATES[1], y: 340 },
+      { x: DATES[2], y: 220 },
+      { x: DATES[3], y: 450 },
+    ],
+  },
+  {
+    title: 'Errores',
+    type: 'area' as const,
+    color: '#D13212',
+    data: [
+      { x: DATES[0], y: 10 },
+      { x: DATES[1], y: 25 },
+      { x: DATES[2], y: 15 },
+      { x: DATES[3], y: 40 },
+    ],
+  },
+];
+
+// --- WRAPPER PRINCIPAL (CORREGIDO) ---
+// overflow: 'hidden' elimina el scroll del contenedor del widget
+const WidgetWrapper = ({
+  children,
+  loading,
+}: {
+  children: React.ReactNode;
+  loading?: boolean;
+}) => (
+  <div
+    style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+    }}
+  >
+    {loading ? (
+      <Box
+        padding="l"
+        textAlign="center"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="100%"
+      >
+        <Spinner size="large" />
+      </Box>
+    ) : (
+      children
+    )}
+  </div>
+);
+
+// --- CONTENEDOR GRÁFICAS (CORREGIDO) ---
+// minHeight: 0 permite que la gráfica se encoja si el usuario hace pequeño el widget, sin generar scroll.
+const ResponsiveChartContainer = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => (
+  <div style={{ flex: 1, minHeight: 0, position: 'relative', width: '100%' }}>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {children}
+    </div>
+  </div>
+);
+
+// --- CONTENEDOR TABLAS (NUEVO) ---
+// Fuerza a la tabla a vivir dentro del espacio sin desbordar el widget
+const TableContainer = ({ children }: { children: React.ReactNode }) => (
+  <div
+    style={{
+      flex: 1,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }}
+  >
     {children}
   </div>
 );
 
-// --- 1. Service Overview ---
-export const ServiceOverview = memo(() => (
-  <WidgetWrapper>
-    <ColumnLayout columns={4} variant="text-grid">
-      <div><Box variant="awsui-key-label">Running instances</Box><Link href="#" variant="awsui-value-large" fontSize="display-l">14</Link></div>
-      <div><Box variant="awsui-key-label">Volumes</Box><Link href="#" variant="awsui-value-large" fontSize="display-l">126</Link></div>
-      <div><Box variant="awsui-key-label">Security groups</Box><Link href="#" variant="awsui-value-large" fontSize="display-l">116</Link></div>
-      <div><Box variant="awsui-key-label">Load balancers</Box><Link href="#" variant="awsui-value-large" fontSize="display-l">28</Link></div>
+// 1. KPI RESUMEN
+export const InventorySummary = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <Box padding="s">
+      <ColumnLayout columns={4} variant="text-grid" borders="vertical">
+        <div>
+          <Box variant="awsui-key-label">Refacciones</Box>
+          <Link href="#" variant="awsui-value-large" fontSize="display-l">
+            1,842
+          </Link>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Valor Total</Box>
+          <Link href="#" variant="awsui-value-large" fontSize="display-l">
+            $45.2k
+          </Link>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Críticos</Box>
+          <Box
+            variant="awsui-value-large"
+            fontSize="display-l"
+            color="text-status-error"
+          >
+            12
+          </Box>
+        </div>
+        <div>
+          <Box variant="awsui-key-label">Obsoletos</Box>
+          <Link
+            href="#"
+            variant="awsui-value-large"
+            fontSize="display-l"
+            color="text-status-inactive"
+          >
+            85
+          </Link>
+        </div>
+      </ColumnLayout>
+    </Box>
+  </WidgetWrapper>
+));
+
+// 2. USO POR MÁQUINA
+export const MachineUsage = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <ResponsiveChartContainer>
+      <BarChart
+        series={[
+          {
+            title: 'Consultas',
+            type: 'bar',
+            data: [
+              { x: 'IJ White', y: 320 },
+              { x: 'Mundini', y: 210 },
+              { x: 'Moleelar', y: 150 },
+              { x: 'Sidel', y: 90 },
+              { x: 'Krones', y: 280 },
+            ],
+          },
+        ]}
+        xDomain={['IJ White', 'Mundini', 'Moleelar', 'Sidel', 'Krones']}
+        yDomain={[0, 400]}
+        fitHeight={true}
+        hideFilter
+        hideLegend
+        i18nStrings={{ yTickFormatter: (e) => `${e}` }}
+        ariaLabel="Uso por máquina"
+      />
+    </ResponsiveChartContainer>
+  </WidgetWrapper>
+));
+
+// 3. TRÁFICO
+export const MonthlyTraffic = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <ResponsiveChartContainer>
+      <AreaChart
+        series={TRAFFIC_SERIES}
+        xDomain={[DATES[0], DATES[3]]}
+        yDomain={[0, 600]}
+        fitHeight={true}
+        hideFilter
+        xScaleType="time"
+        i18nStrings={{
+          legendAriaLabel: 'Leyenda',
+          chartAriaRoleDescription: 'gráfico',
+        }}
+        ariaLabel="Tráfico mensual"
+      />
+    </ResponsiveChartContainer>
+  </WidgetWrapper>
+));
+
+// 4. SISTEMA
+export const SystemHealth = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <ColumnLayout columns={1} borders="horizontal">
+      <Box padding={{ vertical: 's' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box variant="strong">Modelo IA</Box>
+          <StatusIndicator type="success">En línea</StatusIndicator>
+        </div>
+      </Box>
+      <Box padding={{ vertical: 's' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box variant="strong">API Backend</Box>
+          <StatusIndicator type="success">Estable</StatusIndicator>
+        </div>
+      </Box>
+      <Box padding={{ vertical: 's' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box variant="strong">DB Usuarios</Box>
+          <StatusIndicator type="success">OK</StatusIndicator>
+        </div>
+      </Box>
+      <Box padding={{ vertical: 's' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box variant="strong">ERP Sync</Box>
+          <StatusIndicator type="warning">Lento</StatusIndicator>
+        </div>
+      </Box>
     </ColumnLayout>
   </WidgetWrapper>
 ));
 
-// --- 2. Instance Hours ---
-export const InstanceHours = memo(() => (
-  <WidgetWrapper>
-    <BarChart
-      series={[
-        { title: "On-demand", type: "bar", data: [{ x: "Jan", y: 450 }, { x: "Feb", y: 600 }, { x: "Mar", y: 550 }, { x: "Apr", y: 480 }, { x: "May", y: 620 }, { x: "Jun", y: 700 }] },
-        { title: "Spot", type: "bar", data: [{ x: "Jan", y: 100 }, { x: "Feb", y: 120 }, { x: "Mar", y: 110 }, { x: "Apr", y: 90 }, { x: "May", y: 130 }, { x: "Jun", y: 150 }] }
-      ]}
-      xDomain={["Jan", "Feb", "Mar", "Apr", "May", "Jun"]}
-      yDomain={[0, 1000]}
-      stackedBars
-      fitHeight={true}
-      hideFilter
-      i18nStrings={{ legendAriaLabel: "Legend", chartAriaRoleDescription: "bar chart", yTickFormatter: (e) => `${e}` }}
-    />
+// 5. CATEGORÍAS
+export const CategoryDistribution = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <ResponsiveChartContainer>
+      <PieChart
+        data={[
+          { title: 'Sensores', value: 35, color: '#0073bb' },
+          { title: 'Motores', value: 20, color: '#e07700' },
+          { title: 'Bandas', value: 15, color: '#2c823c' },
+          { title: 'Otros', value: 30, color: '#5f6b7a' },
+        ]}
+        size="medium"
+        variant="donut"
+        hideLegend
+        fitHeight={true}
+        innerMetricDescription="Total"
+        innerMetricValue="1.8k"
+        ariaLabel="Categorías"
+      />
+    </ResponsiveChartContainer>
   </WidgetWrapper>
 ));
 
-// --- 3. Network Traffic ---
-const trafficDataX = [new Date(2023, 0, 1), new Date(2023, 0, 2), new Date(2023, 0, 3), new Date(2023, 0, 4), new Date(2023, 0, 5), new Date(2023, 0, 6)];
-export const NetworkTraffic = memo(() => (
-  <WidgetWrapper>
-    <AreaChart
-      series={[
-        { title: "Inbound", type: "area", data: [{ x: trafficDataX[0], y: 120 }, { x: trafficDataX[1], y: 340 }, { x: trafficDataX[2], y: 220 }, { x: trafficDataX[3], y: 450 }, { x: trafficDataX[4], y: 380 }, { x: trafficDataX[5], y: 520 }] },
-        { title: "Outbound", type: "area", data: [{ x: trafficDataX[0], y: 80 }, { x: trafficDataX[1], y: 150 }, { x: trafficDataX[2], y: 100 }, { x: trafficDataX[3], y: 200 }, { x: trafficDataX[4], y: 150 }, { x: trafficDataX[5], y: 250 }] }
-      ]}
-      xDomain={[trafficDataX[0], trafficDataX[5]]}
-      yDomain={[0, 600]}
-      fitHeight={true}
-      hideFilter
-      xScaleType="time"
-      i18nStrings={{ legendAriaLabel: "Legend", chartAriaRoleDescription: "area chart" }}
-    />
+// 6. ALERTAS STOCK (Usa TableContainer)
+export const StockAlerts = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <TableContainer>
+      <Table
+        columnDefinitions={[
+          {
+            header: 'Refacción',
+            cell: (item) => <Link href="#">{item.name}</Link>,
+          },
+          {
+            header: 'Cant.',
+            cell: (item) => <Badge color="red">{item.stock}</Badge>,
+          },
+          { header: 'Maq.', cell: (item) => item.machine },
+        ]}
+        items={[
+          { name: 'Sensor #22', stock: '0', machine: 'Mundini' },
+          { name: 'Banda 5m', stock: '1', machine: 'IJ White' },
+          { name: 'Rodamiento', stock: '2', machine: 'Sidel' },
+          { name: 'Válvula Pn.', stock: '2', machine: 'Krones' },
+          { name: 'Pistón 3mm', stock: '1', machine: 'Moleelar' },
+        ]}
+        variant="embedded"
+      />
+    </TableContainer>
   </WidgetWrapper>
 ));
 
-// --- 4. Service Health ---
-export const ServiceHealth = memo(() => (
-  <WidgetWrapper>
-    <ColumnLayout columns={1}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><Link href="#">Amazon EC2</Link><StatusIndicator type="success">Normal</StatusIndicator></div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><Link href="#">Amazon RDS</Link><StatusIndicator type="success">Normal</StatusIndicator></div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}><Link href="#">AWS Lambda</Link><StatusIndicator type="warning">Degraded</StatusIndicator></div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}><Link href="#">Amazon S3</Link><StatusIndicator type="success">Normal</StatusIndicator></div>
-    </ColumnLayout>
+// 7. CONSULTAS (Usa TableContainer)
+export const RecentQueries = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <TableContainer>
+      <Table
+        columnDefinitions={[
+          { header: 'Hora', cell: (item) => item.time, width: 85 },
+          { header: 'Usuario', cell: (item) => item.user },
+          {
+            header: 'Est.',
+            cell: (item) => (
+              <StatusIndicator
+                type={item.status === 'OK' ? 'success' : 'error'}
+              >
+                {item.status}
+              </StatusIndicator>
+            ),
+          },
+        ]}
+        items={[
+          { time: '10:42', user: 'Juan P.', status: 'OK' },
+          { time: '10:38', user: 'Luis R.', status: 'Error' },
+          { time: '10:15', user: 'Admin', status: 'OK' },
+          { time: '09:50', user: 'Ana M.', status: 'OK' },
+        ]}
+        variant="embedded"
+      />
+    </TableContainer>
   </WidgetWrapper>
 ));
 
-// --- 5. Zone Status ---
-export const ZoneStatus = memo(() => (
-  <WidgetWrapper>
-    <PieChart
-      data={[{ title: "Operating normally", value: 18, color: "#1D8102" }, { title: "Disrupted", value: 2, color: "#D13212" }]}
-      detailPopoverContent={(datum, sum) => [{ key: "Status", value: datum.title }, { key: "Count", value: `${datum.value}` }, { key: "Percentage", value: `${((datum.value / sum) * 100).toFixed(0)}%` }]}
-      segmentDescription={(datum, sum) => `${datum.value} zones, ${((datum.value / sum) * 100).toFixed(0)}%`}
-      size="medium"
-      variant="donut"
-      hideLegend
-      innerMetricDescription="zones"
-      innerMetricValue="20"
-      fitHeight={true}
-    />
-  </WidgetWrapper>
-));
-
-// --- 6. Events ---
-export const Events = memo(() => (
-  <WidgetWrapper>
-    <Table
-      columnDefinitions={[{ header: 'Event name', cell: item => item.name }, { header: 'Status', cell: item => <StatusIndicator type={item.status === 'Ongoing' ? 'success' : 'pending'}>{item.status}</StatusIndicator> }]}
-      items={[{ name: 'my-instance-1', status: 'Scheduled' }, { name: 'my-instance-3', status: 'Ongoing' }, { name: 'db-production-1', status: 'Ongoing' }, { name: 'redis-cluster-a', status: 'Scheduled' }]}
-      variant="embedded"
-    />
-  </WidgetWrapper>
-));
-
-// --- 7. Alarms ---
-export const Alarms = memo(() => (
-  <WidgetWrapper>
-    <Table
-      columnDefinitions={[{ header: 'Alarm name', cell: item => <Link href="#">{item.name}</Link> }, { header: 'Status', cell: item => <StatusIndicator type="warning">{item.status}</StatusIndicator> }]}
-      items={[{ name: 'TargetTracking-table', status: 'In alarm' }, { name: 'awsroute53-check', status: 'In alarm' }, { name: 'awsdynamodb-read', status: 'Insufficient data' }]}
-      variant="embedded"
-    />
-  </WidgetWrapper>
-));
-
-// --- 8. Features Spotlight ---
-export const FeaturesSpotlight = memo(() => (
-  <WidgetWrapper>
+// 8. NOTIFICACIONES
+export const SystemNotifications = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
     <SpaceBetween size="s">
-      <Box variant="p">Updates on features available in the current region.</Box>
-      <Link href="#"><Icon name="external" /> See what's new</Link>
-      <Link href="#"><Icon name="file" /> Read the blog</Link>
+      <Box variant="h4">Avisos</Box>
+      <Box variant="p" color="text-body-secondary">
+        Mantenimiento IA programado.
+      </Box>
+      <Box fontSize="body-s" color="text-status-info">
+        Sáb 02:00 AM - 04:00 AM
+      </Box>
+      <Link href="#">
+        <Icon name="external" /> Detalles
+      </Link>
     </SpaceBetween>
   </WidgetWrapper>
 ));
 
-// --- 9. Instance Limits ---
-export const InstanceLimits = memo(() => (
-  <WidgetWrapper>
+// 9. OBSOLETOS
+export const ObsoleteStats = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
     <ColumnLayout columns={2} variant="text-grid">
-      <div><Box variant="awsui-key-label">On-Demand</Box><div style={{ fontSize: 20 }}>14</div></div>
-      <div><Box variant="awsui-key-label">Spot</Box><div style={{ fontSize: 20 }}>2</div></div>
-      <div><Box variant="awsui-key-label">vCPUs</Box><div style={{ fontSize: 20 }}>64</div></div>
+      <div>
+        <Box variant="awsui-key-label">Ref. Bajas</Box>
+        <Box fontSize="heading-xl" color="text-status-inactive">
+          12%
+        </Box>
+      </div>
+      <div>
+        <Box variant="awsui-key-label">Inactivos</Box>
+        <Box fontSize="heading-xl">45</Box>
+      </div>
     </ColumnLayout>
   </WidgetWrapper>
 ));
 
-export const OperationalMetrics = memo(() => <Box>System healthy.</Box>);
-
-// --- CONFIGURACIÓN ---
-export const serviceOverview: WidgetConfig = { title: 'Service overview', provider: ServiceOverview, definition: { defaultColumnSpan: 4, defaultRowSpan: 2, minRowSpan: 2 } };
-export const serviceHealth: WidgetConfig = { title: 'Service Health', provider: ServiceHealth, definition: { defaultColumnSpan: 2, defaultRowSpan: 2, minRowSpan: 2 } };
-export const instanceHours: WidgetConfig = { title: 'Instance hours', provider: InstanceHours, definition: { defaultColumnSpan: 2, defaultRowSpan: 4, minRowSpan: 3 } };
-export const networkTraffic: WidgetConfig = { title: 'Network traffic', provider: NetworkTraffic, definition: { defaultColumnSpan: 2, defaultRowSpan: 4, minRowSpan: 3 } };
-export const zoneStatus: WidgetConfig = { title: 'Zone status', provider: ZoneStatus, definition: { defaultColumnSpan: 2, defaultRowSpan: 4, minRowSpan: 3 } };
-export const events: WidgetConfig = { title: 'Events', provider: Events, definition: { defaultColumnSpan: 2, defaultRowSpan: 3 } };
-export const alarms: WidgetConfig = { title: 'Alarms', provider: Alarms, definition: { defaultColumnSpan: 2, defaultRowSpan: 3 } };
-export const featuresSpotlight: WidgetConfig = { title: 'Features spotlight', provider: FeaturesSpotlight, definition: { defaultRowSpan: 2 } };
-export const instanceLimits: WidgetConfig = { title: 'Instance limits', provider: InstanceLimits, definition: { defaultColumnSpan: 2, defaultRowSpan: 2 } };
-export const operationalMetrics: WidgetConfig = { title: 'Operational metrics', provider: OperationalMetrics, definition: { defaultRowSpan: 2 } };
+export const OperationalMetrics = memo(({ loading }: WidgetProps) => (
+  <WidgetWrapper loading={loading}>
+    <Box textAlign="center" padding="l">
+      <StatusIndicator type="success">Servidor OK</StatusIndicator>
+      <Box variant="p" color="text-body-secondary">
+        99.9% Uptime
+      </Box>
+    </Box>
+  </WidgetWrapper>
+));
