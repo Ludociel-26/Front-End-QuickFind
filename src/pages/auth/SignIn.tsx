@@ -37,6 +37,7 @@ import bg1 from '@/assets/login/f1.png';
 import bg2 from '@/assets/login/f2.png';
 import bg3 from '@/assets/login/f3.png';
 import bg4 from '@/assets/login/f4.png';
+import bg5 from '@/assets/login/f5.png';
 
 // --- UTILIDADES ---
 const validatePassword = (pass: string) => {
@@ -265,7 +266,7 @@ const InfoPanel = ({
 }: any) => {
   const features = t('features');
   const randomImage = useMemo(() => {
-    const images = [bg1, bg2, bg3, bg4];
+    const images = [bg1, bg2, bg3, bg4, bg5];
     return images[Math.floor(Math.random() * images.length)];
   }, []);
   return (
@@ -407,17 +408,28 @@ export default function Login() {
     toggleTheme,
     backendUrl,
     setIsLoggedin,
+    isLoggedin, // <--- IMPORTANTE: Traer isLoggedin
     getUserData,
     userData,
-    setPageLoading, // <--- OBTENIDO DEL CONTEXTO
+    setPageLoading,
   } = appContext;
+
+  // ------------------------------------------------------------
+  // FIX: GUARDIA DE SEGURIDAD VISUAL (Race Condition Fix)
+  // ------------------------------------------------------------
+  // Si ya estamos logueados, NO renderizamos el formulario.
+  // Esto evita el "flash" antes de que el useEffect redirija.
+  if (isLoggedin) {
+    return null;
+  }
+  // ------------------------------------------------------------
 
   // Estados visuales
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ESTADO UNIFICADO DEL FORMULARIO (Sin employeeId)
+  // ESTADO UNIFICADO DEL FORMULARIO
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -479,10 +491,10 @@ export default function Login() {
   const isFormValid =
     strengthPercent === 100 && formData.password === formData.confirmPassword;
 
-  // --- LÓGICA DE SUBMIT CON EFECTO AWS LOADING ---
+  // --- LÓGICA DE SUBMIT ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPageLoading(true); // 1. ACTIVAR LA BARRA INMEDIATAMENTE
+    setPageLoading(true);
 
     try {
       axios.defaults.withCredentials = true;
@@ -499,16 +511,13 @@ export default function Login() {
         });
 
         if (data.success) {
-          // Simular proceso de registro exitoso visualmente
           await new Promise((resolve) => setTimeout(resolve, 1500));
-
           toast.success('Cuenta creada exitosamente');
           setIsLoggedin(true);
           await getUserData();
-          // La barra se apaga al navegar o por el Suspense del router
         } else {
           toast.error(data.message);
-          setPageLoading(false); // Apagar si hay error lógico
+          setPageLoading(false);
         }
       } else {
         // LOGIN
@@ -518,38 +527,33 @@ export default function Login() {
         });
 
         if (data.success) {
-          // 2. ÉXITO: Esperamos 1.5s para que la barra se vea procesando
           await new Promise((resolve) => setTimeout(resolve, 1500));
-
-          // 3. Actualizamos estado global -> Esto dispara el useEffect de redirección
           setIsLoggedin(true);
           await getUserData();
         } else {
           toast.error(data.message);
-          setPageLoading(false); // Apagar si credenciales incorrectas
+          setPageLoading(false);
         }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || error.message);
-      setPageLoading(false); // Apagar si hay error de red
+      setPageLoading(false);
     }
   };
 
   // --- LÓGICA DE REDIRECCIÓN POR ROLES ---
+  // Mantenemos esto para manejar el momento exacto en que userData cambia de null a objeto.
   useEffect(() => {
-    if (userData && userData.role) {
+    if (userData && userData.role && isLoggedin) {
       const allowedRoles = [1, 2, 3, 4];
-
       if (allowedRoles.includes(userData.role)) {
         navigate('/dashboard');
-        // Opcional: setPageLoading(false) aquí,
-        // pero mejor dejamos que el Router maneje la transición.
       } else {
         toast.error('Acceso denegado: Rol no autorizado.');
         setPageLoading(false);
       }
     }
-  }, [userData, navigate]);
+  }, [userData, isLoggedin, navigate, setPageLoading]);
 
   const inputClassName = `w-full px-4 py-3.5 rounded-xl text-sm transition-all duration-300 outline-none border backdrop-blur-sm ${
     isDark
@@ -800,7 +804,7 @@ export default function Login() {
                           />
                         </div>
 
-                        {/* FILA 2: Email (Ancho Completo para balance) */}
+                        {/* FILA 2: Email */}
                         <AnimatedInput
                           type="email"
                           name="email"
@@ -813,7 +817,7 @@ export default function Login() {
                           isDarkMode={isDark}
                         />
 
-                        {/* FILA 3: País y Fecha de Nacimiento (Agrupados) */}
+                        {/* FILA 3: País y Fecha */}
                         <div className="grid grid-cols-2 gap-3">
                           <CountrySelect
                             className={inputClassName}

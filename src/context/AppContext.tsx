@@ -5,12 +5,20 @@ import { applyMode, Mode } from '@cloudscape-design/global-styles';
 // --- IMPORTANTE: ESTO DEBE ESTAR EXPORTADO ---
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-interface UserData {
-  id: string;
+// Interfaz que coincide con la respuesta de tu backend (userController.js)
+export interface UserData {
+  id: number | string;
   name: string;
   email: string;
   isAccountVerified: boolean;
+
+  // IDs internos
   role: number;
+  area: number;
+
+  // Nombres para mostrar (Navbar)
+  roleName: string;
+  areaName: string;
 }
 
 interface AppContextType {
@@ -24,7 +32,7 @@ interface AppContextType {
   // Tema
   theme: ThemeMode;
   isDark: boolean;
-  setTheme: (theme: ThemeMode) => void; // Función para cambiar tema
+  setTheme: (theme: ThemeMode) => void;
   toggleTheme: () => void;
 
   // Carga
@@ -67,7 +75,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       if (shouldBeDark) {
         document.documentElement.classList.add('dark');
         applyMode(Mode.Dark);
-        // Sincronizar colores de fondo para evitar parpadeos
         document.documentElement.style.backgroundColor = '#161d26';
         document.body.style.backgroundColor = '#161d26';
       } else {
@@ -99,17 +106,32 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // --- AUTH ---
   const getUserData = async () => {
     try {
+      // ✅ CORRECCIÓN CRÍTICA: Ruta en singular '/api/user/data'
+      // Coincide con app.use('/api/user', userRouter) en server.js
       const { data } = await axios.get(`${backendUrl}/api/user/data`);
+
       if (data.success) {
         setUserData(data.userData);
         setIsLoggedin(true);
       } else {
+        // Si el backend responde success: false explícitamente
+        setUserData(null);
+        // Opcional: setIsLoggedin(false) solo si es error crítico
+      }
+    } catch (error: any) {
+      console.error('Error obteniendo datos del usuario:', error);
+
+      // ✅ PROTECCIÓN CONTRA LOOP INFINITO:
+      // Solo cerramos sesión si el error es de autenticación (401 No autorizado / 403 Prohibido)
+      if (
+        error.response &&
+        (error.response.status === 401 || error.response.status === 403)
+      ) {
         setUserData(null);
         setIsLoggedin(false);
       }
-    } catch (error: any) {
-      setUserData(null);
-      setIsLoggedin(false);
+      // Si es 404 (Ruta mal) o 500 (Server error), NO deslogueamos para evitar parpadeo/loop,
+      // pero el usuario verá que no cargaron sus datos.
     }
   };
 
@@ -118,6 +140,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`);
       if (data.success) {
         setIsLoggedin(true);
+        // Ya autenticados, pedimos los datos
         await getUserData();
       } else {
         setIsLoggedin(false);
