@@ -1,6 +1,5 @@
-import * as React from 'react';
-import axios from 'axios';
 import { useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   AppLayout,
   Container,
@@ -56,7 +55,7 @@ const AREA_OPTIONS = [
 
 export default function EditUser() {
   const navigate = useNavigate();
-  const { userId } = useParams(); // Obtenemos el ID de la URL
+  const { userId } = useParams();
   const { backendUrl } = useContext(AppContent) || {
     backendUrl: 'http://localhost:4000',
   };
@@ -72,7 +71,7 @@ export default function EditUser() {
     email: '',
     country: '',
     birth_date: '',
-    phone_lada: '+52', // Valor por defecto si viene null
+    phone_lada: '+52',
     phone_number: '',
     rol_id: '1',
     area_id: '9',
@@ -90,7 +89,6 @@ export default function EditUser() {
 
       try {
         setLoadingData(true);
-        // Llamada al endpoint que creamos: getUserById
         const response = await axios.get(
           `${backendUrl}/api/user/admin/${userId}`,
           {
@@ -101,7 +99,6 @@ export default function EditUser() {
         if (response.data.success) {
           const user = response.data.user;
 
-          // Formatear fecha para el DatePicker (YYYY-MM-DD)
           let formattedDate = '';
           if (user.birth_date) {
             formattedDate = new Date(user.birth_date)
@@ -115,9 +112,9 @@ export default function EditUser() {
             email: user.email || '',
             country: user.country || '',
             birth_date: formattedDate,
-            phone_lada: user.phone_lada || '+52', // Asumiendo que agregaste estos campos al modelo
+            phone_lada: user.phone_lada || '+52',
             phone_number: user.phone_number || '',
-            rol_id: String(user.rol_id), // Convertir a string para el Select
+            rol_id: String(user.rol_id),
             area_id: String(user.area_id),
             is_active: user.is_active,
             is_account_verified: user.is_account_verified,
@@ -169,8 +166,12 @@ export default function EditUser() {
   };
 
   // --- ENVIAR ACTUALIZACIÓN ---
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // FIX: Permitimos que 'e' sea opcional y de cualquier tipo para satisfacer tanto a la etiqueta <form> como al <Button> de Cloudscape.
+  const handleSubmit = async (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+
     setSubmitError(null);
 
     if (!validateForm()) return;
@@ -189,7 +190,6 @@ export default function EditUser() {
       );
 
       if (response.data.success) {
-        // Regresar a la tabla tras éxito
         navigate('/users');
       } else {
         setSubmitError(response.data.message || 'Error al actualizar usuario.');
@@ -244,7 +244,6 @@ export default function EditUser() {
                   description={`Editando información de: ${formValues.name} ${formValues.surname}`}
                   actions={
                     <SpaceBetween direction="horizontal" size="xs">
-                      {/* Botón rápido para cancelar */}
                       <Button onClick={() => navigate('/users')}>
                         Cancelar
                       </Button>
@@ -278,7 +277,6 @@ export default function EditUser() {
                       header={<Header variant="h2">Estado y Permisos</Header>}
                     >
                       <SpaceBetween size="l">
-                        {/* Control de Estado (Activo/Inactivo) */}
                         <Box variant="awsui-key-label">Estado de la cuenta</Box>
                         <ColumnLayout columns={2} variant="text-grid">
                           <Toggle
@@ -355,7 +353,6 @@ export default function EditUser() {
                           </FormField>
                         </ColumnLayout>
 
-                        {/* Nota: No permitimos editar el Email aquí comúnmente, pero si lo necesitas, descomenta: */}
                         <FormField
                           label="Correo Electrónico"
                           errorText={formErrors.email}

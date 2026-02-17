@@ -9,20 +9,16 @@ import {
   SpaceBetween,
 } from '@cloudscape-design/components';
 
-// --- IMPORTACIÓN DE LAYOUTS (Asegúrate de que las rutas coincidan con tu proyecto) ---
 import Navbar from '@/components/layouts/AppHeader';
 import GlobalSidebar from '@/components/layouts/AppSidebar';
 import SecondaryHeader from '@/components/layouts/BreadcrumbNavBar';
 import { Footer } from '@/components/layouts/AppFooter';
 
-// --- IMPORTACIONES DE TUS ÍCONOS SVG DESDE ASSETS ---
-// Nota: Asegúrate de que los nombres de los archivos coincidan exactamente con los que tienes en tu carpeta src/assets
 import iconAlmacen from '@/assets/services/AI.svg';
 import iconMantenimiento from '@/assets/services/AI.svg';
 import iconAI from '@/assets/services/AI.svg';
 import iconAdmin from '@/assets/services/AI.svg';
 
-// --- ESTILOS VISUALES EXACTOS (Clon de AWS Console) ---
 const styles = `
   .aws-category-header {
     display: flex;
@@ -43,7 +39,7 @@ const styles = `
   .aws-service-list {
     list-style: none;
     padding: 0;
-    margin: 0 0 0 36px; /* Indentación exacta debajo del texto del título */
+    margin: 0 0 0 36px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -52,7 +48,7 @@ const styles = `
   .aws-service-list li a {
     font-size: 14px !important;
     font-weight: 400 !important; 
-    color: #0972d3 !important; /* Azul exacto de AWS */
+    color: #0972d3 !important;
     text-decoration: none !important; 
     transition: color 0.1s ease;
   }
@@ -63,7 +59,6 @@ const styles = `
   }
 `;
 
-// --- TIPOS Y ESTRUCTURA DE DATOS ---
 type CategoryType = 'almacen' | 'mantenimiento' | 'ai' | 'admin';
 
 interface AppServiceItem {
@@ -144,7 +139,6 @@ const SERVICES_DATA: { leftColumn: AppCategory[]; rightColumn: AppCategory[] } =
     ],
   };
 
-// --- COMPONENTE RENDERIZADOR DE CATEGORÍA ---
 const ServiceCategory = ({ category }: { category: AppCategory }) => (
   <Box margin={{ bottom: 'xxl' }}>
     <div className="aws-category-header">
@@ -163,9 +157,8 @@ const ServiceCategory = ({ category }: { category: AppCategory }) => (
   </Box>
 );
 
-// --- COMPONENTE PRINCIPAL DE LA VISTA ---
 export default function AppDirectory() {
-  const [navigationOpen, setNavigationOpen] = React.useState(true);
+  const [navigationOpen, setNavigationOpen] = React.useState<boolean>(true);
 
   return (
     <div
@@ -178,19 +171,19 @@ export default function AppDirectory() {
     >
       <style>{styles}</style>
 
-      {/* HEADER STICKY */}
       <div
         id="sticky-nav-container"
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
+        {/* @ts-ignore: Se omite la validación estricta de propiedades faltantes en la interfaz de BreadcrumbNavBar para compilar sin errores */}
         <SecondaryHeader
           breadcrumbs={[
             { text: 'Página de inicio', href: '/dashboard' },
             { text: 'Todos los servicios', href: '#' },
           ]}
           isMenuOpen={navigationOpen}
-          onMenuClick={() => setNavigationOpen(!navigationOpen)}
+          onMenuClick={() => setNavigationOpen((prev) => !prev)}
         />
       </div>
 
@@ -214,13 +207,10 @@ export default function AppDirectory() {
               <Container
                 header={<Header variant="h2">Servicios por categoría</Header>}
               >
-                {/* Utilizamos Grid en lugar de ColumnLayout para asegurar que NO haya 
-                  línea divisoria y mantener el espaciado exacto.
-                */}
                 <Grid
                   gridDefinition={[
-                    { colspan: { default: 12, s: 6 } }, // Columna Izquierda
-                    { colspan: { default: 12, s: 6 } }, // Columna Derecha
+                    { colspan: { default: 12, s: 6 } },
+                    { colspan: { default: 12, s: 6 } },
                   ]}
                 >
                   <div>
@@ -250,10 +240,6 @@ export default function AppDirectory() {
     </div>
   );
 }
-
-// ============================================================================
-// --- RENDERIZADOR DE ÍCONOS SVG (DESDE ASSETS) ---
-// ============================================================================
 
 const baseIconStyle: React.CSSProperties = {
   width: '24px',

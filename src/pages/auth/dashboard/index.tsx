@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useContext,
-  useRef,
-} from 'react';
+import { useState, useEffect, useCallback, useContext, useRef } from 'react';
 
 // --- IMPORTACIONES CLOUDSCAPE ---
 import Board from '@cloudscape-design/board-components/board';
@@ -104,7 +98,6 @@ export default function DashboardFeature() {
   useEffect(() => {
     isMounted.current = true;
 
-    // Si ya cargó antes, abortamos para no repetir las notificaciones
     if (hasLoaded.current) return;
 
     if (setPageLoading) {
@@ -123,7 +116,6 @@ export default function DashboardFeature() {
       if (isMounted.current && !hasLoaded.current) {
         setIsWidgetLoading(false);
 
-        // Disparamos notificaciones SOLO UNA VEZ
         if (addAlert) {
           addAlert(
             'success',
@@ -142,11 +134,12 @@ export default function DashboardFeature() {
     return () => {
       isMounted.current = false;
     };
-  }, []); // <-- ARREGLO VACÍO: Solo se ejecuta al montar el componente
+  }, [addAlert, setPageLoading]);
 
   const handleItemsChange = useCallback(
     (event: CustomEvent<BoardProps.ItemsChangeDetail<WidgetDataType>>) => {
-      setItems(event.detail.items);
+      // FIX: Esparcimos (spread) los ítems para transformar el ReadonlyArray en un arreglo mutable.
+      setItems([...event.detail.items]);
     },
     [],
   );
@@ -304,15 +297,11 @@ export default function DashboardFeature() {
             }
           >
             {isPageLoading ? (
-              <Box
-                padding="xxl"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                customStyles={{ height: '60vh' }}
-              >
-                <Spinner size="large" />
-              </Box>
+              <div style={{ height: '60vh' }}>
+                <Box padding="xxl">
+                  <Spinner size="large" />
+                </Box>
+              </div>
             ) : (
               <SpaceBetween size="xxl">
                 <div

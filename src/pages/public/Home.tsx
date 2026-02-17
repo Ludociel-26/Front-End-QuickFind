@@ -1,26 +1,24 @@
-import React, { useState, useEffect } from 'react';
+// FIX: Quitamos "React" de la importación
+import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Search,
   ChevronDown,
-  Menu,
-  X,
   Code,
   Terminal,
   Play,
-  Globe,
   Shield,
   Zap,
   CheckCircle2,
   Lock,
   GitPullRequest,
-  Layout,
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN DE ANIMACIONES ---
 
 // Animación de flotación continua (bucle infinito)
-const floatLoop = {
+// FIX: Tipamos explícitamente como "any" para saltar la validación estricta de framer-motion
+const floatLoop: any = {
   y: [-10, 10, -10],
   rotate: [0, 5, -5, 0],
   transition: {
@@ -31,22 +29,22 @@ const floatLoop = {
 };
 
 // Animación de surgimiento (La "Invocación" desde abajo)
-// Los elementos empiezan abajo y pequeños, y suben a su posición
-const surgeVariant = (delay, xOffset = 0) => ({
+// FIX: Tipamos el retorno de la función como "any"
+const surgeVariant = (delay: number, xOffset: number = 0): any => ({
   hidden: {
-    y: 300, // Empiezan 300px abajo (escondidos tras el editor/título)
-    x: xOffset, // Empiezan desplazados hacia el centro
+    y: 300,
+    x: xOffset,
     opacity: 0,
-    scale: 0.4, // Empiezan pequeños
+    scale: 0.4,
   },
   visible: {
-    y: 0, // Suben a su lugar original
-    x: 0, // Se abren a su lugar original
+    y: 0,
+    x: 0,
     opacity: 1,
     scale: 1,
     transition: {
       duration: 1.8,
-      ease: [0.16, 1, 0.3, 1], // Efecto elástico suave
+      ease: [0.16, 1, 0.3, 1],
       delay: delay,
     },
   },
@@ -120,12 +118,11 @@ const Navbar = () => {
   );
 };
 
-// --- COMPONENTE: MASCOTAS Y HAZ DE LUZ (RENOVADO) ---
+// --- COMPONENTE: MASCOTAS Y HAZ DE LUZ ---
 const MascotsAndGlow = () => {
   return (
     <div className="absolute top-0 left-0 w-full h-full pointer-events-none z-0 overflow-visible">
       {/* 1. EL HAZ DE LUZ CENTRAL (THE BEAM) */}
-      {/* Nace desde la parte inferior central y sube */}
       <motion.div
         initial={{ height: '0%', opacity: 0 }}
         animate={{ height: '130%', opacity: 0.8 }}
@@ -133,7 +130,7 @@ const MascotsAndGlow = () => {
         className="absolute bottom-[-10%] left-1/2 -translate-x-1/2 w-[600px] bg-gradient-to-t from-[#7c3aed]/40 via-[#3b82f6]/10 to-transparent blur-[80px] mix-blend-screen"
       />
 
-      {/* Luz focal en la base (el punto de origen) */}
+      {/* Luz focal en la base */}
       <motion.div
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -142,7 +139,6 @@ const MascotsAndGlow = () => {
       />
 
       {/* 2. ESTRELLAS / PARTÍCULAS QUE SUBEN */}
-      {/* Pequeños puntos que suben infinitamente */}
       {[...Array(8)].map((_, i) => (
         <motion.div
           key={i}
@@ -162,12 +158,11 @@ const MascotsAndGlow = () => {
       <div className="relative w-full max-w-[1400px] mx-auto h-full">
         {/* -- OCTOCAT (Izquierda) -- */}
         <motion.div
-          variants={surgeVariant(0.2, 150)} // 150px al centro al inicio
+          variants={surgeVariant(0.2, 150)}
           initial="hidden"
           animate="visible"
           className="absolute top-[28%] left-[5%] lg:left-[8%] w-32 h-32 md:w-40 md:h-40 z-10"
         >
-          {/* Loop infinito */}
           <motion.div animate={floatLoop} className="w-full h-full">
             <div className="w-full h-full rounded-[2rem] bg-gradient-to-br from-[#6366f1]/40 to-[#3b82f6]/10 backdrop-blur-md border border-white/20 shadow-[0_0_60px_rgba(99,102,241,0.3)] relative overflow-hidden transform rotate-12">
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent to-white/20"></div>
@@ -182,7 +177,7 @@ const MascotsAndGlow = () => {
 
         {/* -- ESFERA (Arriba Derecha) -- */}
         <motion.div
-          variants={surgeVariant(0.4, -100)} // -100px al centro al inicio
+          variants={surgeVariant(0.4, -100)}
           initial="hidden"
           animate="visible"
           className="absolute top-[18%] right-[5%] lg:right-[15%] w-20 h-20 md:w-28 md:h-28 z-10"
@@ -194,7 +189,7 @@ const MascotsAndGlow = () => {
           </motion.div>
         </motion.div>
 
-        {/* -- PATO (Abajo Derecha - Detrás del editor) -- */}
+        {/* -- PATO (Abajo Derecha) -- */}
         <motion.div
           variants={surgeVariant(0.6, -120)}
           initial="hidden"
@@ -213,7 +208,7 @@ const MascotsAndGlow = () => {
   );
 };
 
-// --- COMPONENTE: EDITOR HERO (REPLICANDO CAPTURA) ---
+// --- COMPONENTE: EDITOR HERO ---
 const HeroEditor = () => {
   return (
     <motion.div
@@ -222,7 +217,7 @@ const HeroEditor = () => {
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.5 }}
       className="relative w-full max-w-[1248px] mx-auto mt-20 z-20 perspective-[2000px]"
     >
-      {/* GLOW TRASERO (Borde iluminado) */}
+      {/* GLOW TRASERO */}
       <div className="absolute -inset-[1px] bg-gradient-to-r from-[#7c3aed] via-[#2563eb] to-[#db2777] rounded-2xl blur-sm opacity-50"></div>
 
       {/* VENTANA PRINCIPAL */}
@@ -234,7 +229,6 @@ const HeroEditor = () => {
             <div className="w-3 h-3 rounded-full bg-[#ffbd2e]/80"></div>
             <div className="w-3 h-3 rounded-full bg-[#27c93f]/80"></div>
           </div>
-          {/* Nombre del archivo centrado */}
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1 rounded-md border border-white/10 bg-[#0d1117]/30 text-xs text-gray-400 font-mono">
             <Code size={12} className="text-blue-400" />
             mona-cat/sky-walker-game
@@ -496,13 +490,9 @@ export default function GitHubReplicaFinal() {
     <div className="bg-[#0d1117] min-h-screen text-gray-400 font-sans selection:bg-purple-500/30 overflow-x-hidden">
       <Navbar />
 
-      {/* HERO SECTION GIGANTE */}
-      {/* relative: contiene las mascotas absolutas */}
       <section className="relative pt-48 pb-40 px-6">
-        {/* 1. FONDO ANIMADO Y MASCOTAS (Detrás de todo) */}
         <MascotsAndGlow />
 
-        {/* 2. TEXTO HERO (Encima de la luz, debajo del editor) */}
         <motion.div
           style={{ y: textY, opacity: textOpacity }}
           className="container mx-auto text-center max-w-5xl relative z-10 mb-20"
@@ -546,11 +536,9 @@ export default function GitHubReplicaFinal() {
           </div>
         </motion.div>
 
-        {/* 3. VENTANA DE CÓDIGO (HERO EDITOR) - Al frente */}
         <HeroEditor />
       </section>
 
-      {/* LOGOS STRIP */}
       <div className="py-24 border-y border-white/5 bg-[#0d1117] relative z-10">
         <div className="container mx-auto px-6">
           <p className="text-gray-500 mb-8 font-medium">
@@ -567,12 +555,10 @@ export default function GitHubReplicaFinal() {
         </div>
       </div>
 
-      {/* SECCIONES LARGAS */}
       <Productivity />
       <Security />
       <Collaboration />
 
-      {/* CTA FINAL */}
       <section className="py-40 bg-[#0d1117] text-center border-b border-white/10 relative z-10">
         <h2 className="text-5xl md:text-7xl font-bold text-white mb-10 max-w-5xl mx-auto tracking-tight">
           Millions of developers and businesses call GitHub home
@@ -589,7 +575,6 @@ export default function GitHubReplicaFinal() {
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer className="py-20 bg-[#0d1117] text-xs text-gray-500 relative z-10">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between">
           <div className="mb-4 md:mb-0">

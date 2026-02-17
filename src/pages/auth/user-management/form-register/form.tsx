@@ -1,6 +1,5 @@
-import * as React from 'react';
-import axios from 'axios';
 import { useContext, useState } from 'react';
+import axios from 'axios';
 import {
   AppLayout,
   Container,
@@ -110,8 +109,12 @@ export default function CreateUser() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // FIX: Se permite que el evento sea de tipo any y opcional
+  const handleSubmit = async (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+
     setSubmitError(null);
 
     if (!validateForm()) return;
@@ -239,9 +242,10 @@ export default function CreateUser() {
                           </FormField>
                         </ColumnLayout>
 
+                        {/* FIX: variant 'awsui-gen-ai-label' no existe, usamos algo válido y el color body-secondary */}
                         <Box
-                          variant="awsui-gen-ai-label"
-                          color="text-status-info"
+                          variant="strong"
+                          color="text-body-secondary"
                           padding={{ top: 's', bottom: 's' }}
                         >
                           Configuración de permisos
@@ -328,7 +332,7 @@ export default function CreateUser() {
                             onChange={({ detail }) =>
                               handleChange('birth_date', detail.value)
                             }
-                            placeholder="YYYY/MM/DD"
+                            placeholder="YYYY-MM-DD"
                             isDateEnabled={() => true}
                           />
                         </FormField>

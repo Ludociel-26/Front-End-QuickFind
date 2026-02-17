@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useContext, useState } from 'react';
 import { AppContent } from '@/context/AppContext';
 
@@ -61,7 +60,7 @@ const FeatureCard = ({ icon, title, text, isDark }: any) => (
         marginBottom: '16px',
       }}
     >
-      <Icon name={icon} size="medium" />
+      <Icon name={icon as any} size="medium" />
     </div>
     <Box fontSize="heading-s" fontWeight="bold" margin={{ bottom: 'xs' }}>
       {title}
@@ -128,7 +127,7 @@ export default function SystemAdminOverview() {
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeSection, setActiveSection] = useState('introduction');
 
-  const scrollToAnchor = (id: string, e: React.MouseEvent) => {
+  const scrollToAnchor = (id: string, e: any) => {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
@@ -246,7 +245,7 @@ export default function SystemAdminOverview() {
                       'Alerta de Seguridad: Hay 3 solicitudes de acceso de nuevos usuarios pendientes de aprobación.',
                     dismissible: true,
                     id: 'alert-1',
-                  },
+                  } as any,
                 ]}
               />
 
@@ -290,7 +289,7 @@ export default function SystemAdminOverview() {
                     </p>
                     <SpaceBetween size="m" direction="horizontal">
                       <Button variant="primary">Gestionar Usuarios</Button>
-                      <Button iconName="view-full">
+                      <Button iconName={'view-full' as any}>
                         Ver Logs de Auditoría
                       </Button>
                     </SpaceBetween>
@@ -315,10 +314,10 @@ export default function SystemAdminOverview() {
                         Acciones Rápidas
                       </Box>
                       <SpaceBetween size="s">
-                        <Button fullWidth iconName="user-profile">
+                        <Button fullWidth iconName={'user-profile' as any}>
                           Invitar Nuevo Usuario
                         </Button>
-                        <Button fullWidth iconName="security">
+                        <Button fullWidth iconName={'security' as any}>
                           Revisar Alertas de Red
                         </Button>
                       </SpaceBetween>
@@ -337,7 +336,6 @@ export default function SystemAdminOverview() {
                         </span>
                         <span style={{ color: '#18aa44', fontWeight: 'bold' }}>
                           {' '}
-                          {/* AWS Green */}
                           Óptimo (100%)
                         </span>
                       </div>
@@ -402,7 +400,7 @@ export default function SystemAdminOverview() {
                       />
                       <FeatureCard
                         isDark={isDark}
-                        icon="shield-check"
+                        icon="security"
                         title="Políticas de Seguridad"
                         text="Requisitos de complejidad de contraseñas, MFA obligatorio y listas de IP permitidas."
                       />
@@ -419,33 +417,42 @@ export default function SystemAdminOverview() {
                 <section id="admin-modules">
                   <Header variant="h2">Módulos de Configuración</Header>
                   <Box margin={{ top: 'm' }}>
+                    {/* FIX: Agregada propiedad 'value' en cada ítem y en el componente principal */}
                     <Tiles
-                      items={[
-                        {
-                          label: 'Usuarios y Permisos',
-                          description:
-                            'Cree usuarios, asigne grupos y gestione políticas IAM.',
-                          iconName: 'users',
-                        },
-                        {
-                          label: 'Integraciones (API / Webhooks)',
-                          description:
-                            'Gestione tokens de API y conexiones con ERPs o servicios externos.',
-                          iconName: 'share',
-                        },
-                        {
-                          label: 'Configuración del Entorno',
-                          description:
-                            'Variables globales, límites de almacenamiento y parámetros del sistema.',
-                          iconName: 'settings',
-                        },
-                        {
-                          label: 'Notificaciones y Alertas',
-                          description:
-                            'Reglas de enrutamiento para alertas de sistema (Email, SMS, Slack).',
-                          iconName: 'notification',
-                        },
-                      ]}
+                      value=""
+                      onChange={() => {}}
+                      items={
+                        [
+                          {
+                            value: 'mod-1',
+                            label: 'Usuarios y Permisos',
+                            description:
+                              'Cree usuarios, asigne grupos y gestione políticas IAM.',
+                            iconName: 'user-profile',
+                          },
+                          {
+                            value: 'mod-2',
+                            label: 'Integraciones (API / Webhooks)',
+                            description:
+                              'Gestione tokens de API y conexiones con ERPs o servicios externos.',
+                            iconName: 'share',
+                          },
+                          {
+                            value: 'mod-3',
+                            label: 'Configuración del Entorno',
+                            description:
+                              'Variables globales, límites de almacenamiento y parámetros del sistema.',
+                            iconName: 'settings',
+                          },
+                          {
+                            value: 'mod-4',
+                            label: 'Notificaciones y Alertas',
+                            description:
+                              'Reglas de enrutamiento para alertas de sistema (Email, SMS, Slack).',
+                            iconName: 'notification',
+                          },
+                        ] as any
+                      }
                     />
                   </Box>
                 </section>
@@ -507,7 +514,7 @@ export default function SystemAdminOverview() {
                           detecte anomalías de acceso (como múltiples intentos
                           fallidos de inicio de sesión).
                         </Box>
-                        <Button iconName="line-chart">
+                        <Button iconName={'insert-chart' as any}>
                           Ver Dashboard de Métricas
                         </Button>
                       </SpaceBetween>

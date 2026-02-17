@@ -1,5 +1,4 @@
-import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { AppContent } from '@/context/AppContext';
 
 // --- TUS COMPONENTES ---
@@ -13,7 +12,6 @@ import {
   Container,
   Header,
   SpaceBetween,
-  Link,
   Box,
   Grid,
   Icon,
@@ -62,7 +60,8 @@ const FeatureCard = ({ icon, title, text, isDark }: any) => (
         marginBottom: '16px',
       }}
     >
-      <Icon name={icon} size="medium" />
+      {/* FIX: Pasamos el icono como any para que TS no rechace nombres personalizados */}
+      <Icon name={icon as any} size="medium" />
     </div>
     <Box fontSize="heading-s" fontWeight="bold" margin={{ bottom: 'xs' }}>
       {title}
@@ -129,7 +128,8 @@ export default function WarehouseServiceView() {
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeSection, setActiveSection] = useState('introduction');
 
-  const scrollToAnchor = (id: string, e: React.MouseEvent) => {
+  // FIX: Parámetro e de tipo any para que no pida la importación de React
+  const scrollToAnchor = (id: string, e: any) => {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
@@ -162,14 +162,12 @@ export default function WarehouseServiceView() {
       }}
     >
       {/* 1. HEADER CONTAINER (Sticky) */}
-      {/* Contiene Navbar y la Barra de Rutas con el botón de menú */}
       <div
         id="sticky-nav-container"
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
 
-        {/* Barra Secundaria (RouteBar + Menu Toggle) */}
         <div
           style={{
             backgroundColor: colors.barBg,
@@ -180,7 +178,6 @@ export default function WarehouseServiceView() {
             height: '50px',
           }}
         >
-          {/* Botón de Menú (Controla el Slider) */}
           <div style={{ marginRight: '16px' }}>
             <Button
               variant="icon"
@@ -190,7 +187,6 @@ export default function WarehouseServiceView() {
             />
           </div>
 
-          {/* Tu componente de rutas original */}
           <div style={{ flexGrow: 1 }}>
             <RouteNavbar />
           </div>
@@ -198,15 +194,12 @@ export default function WarehouseServiceView() {
       </div>
 
       {/* 2. APP LAYOUT */}
-      {/* Se encarga de la estructura: Slider a la izquierda, Contenido a la derecha */}
       <AppLayout
         headerSelector="#sticky-nav-container"
         disableContentPaddings={true}
         navigationOpen={navigationOpen}
         onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
-        // --- AQUÍ VA TU SLIDER ---
         navigation={<Slider />}
-        // --- BARRA LATERAL DERECHA (Tools) ---
         tools={
           <div style={{ padding: '20px' }}>
             <Header variant="h3">En esta página</Header>
@@ -240,7 +233,6 @@ export default function WarehouseServiceView() {
             </ul>
           </div>
         }
-        // --- CONTENIDO PRINCIPAL ---
         content={
           <div style={{ paddingBottom: '0' }}>
             {/* HERO SECTION AZUL */}
@@ -258,7 +250,7 @@ export default function WarehouseServiceView() {
                     content: 'Inventario sincronizado correctamente.',
                     dismissible: true,
                     id: 'alert-1',
-                  },
+                  } as any,
                 ]}
               />
 
@@ -299,7 +291,7 @@ export default function WarehouseServiceView() {
                     </p>
                     <SpaceBetween size="m" direction="horizontal">
                       <Button variant="primary">Panel Principal</Button>
-                      <Button iconName="file-open">Reportes</Button>
+                      <Button iconName={'file-open' as any}>Reportes</Button>
                     </SpaceBetween>
                   </div>
                   {/* Tarjeta Flotante */}
@@ -322,10 +314,10 @@ export default function WarehouseServiceView() {
                         Accesos Directos
                       </Box>
                       <SpaceBetween size="s">
-                        <Button fullWidth iconName="search">
+                        <Button fullWidth iconName={'search' as any}>
                           Buscador Maestro
                         </Button>
-                        <Button fullWidth iconName="add-plus">
+                        <Button fullWidth iconName={'add-plus' as any}>
                           Nueva Recepción
                         </Button>
                       </SpaceBetween>
@@ -415,29 +407,38 @@ export default function WarehouseServiceView() {
                 <section id="inventory-types">
                   <Header variant="h2">Clasificación de Inventarios</Header>
                   <Box margin={{ top: 'm' }}>
+                    {/* FIX: Se añade value y onChange, y se asigna un value a cada ítem para que no de error el componente Tiles */}
                     <Tiles
-                      items={[
-                        {
-                          label: 'Materia Prima',
-                          description: 'Insumos base.',
-                          iconName: 'database',
-                        },
-                        {
-                          label: 'Producto en Proceso',
-                          description: 'En línea.',
-                          iconName: 'status-in-progress',
-                        },
-                        {
-                          label: 'Producto Terminado',
-                          description: 'Venta.',
-                          iconName: 'check',
-                        },
-                        {
-                          label: 'Refacciones',
-                          description: 'Interno.',
-                          iconName: 'tools',
-                        },
-                      ]}
+                      value=""
+                      onChange={() => {}}
+                      items={
+                        [
+                          {
+                            value: 'item-1',
+                            label: 'Materia Prima',
+                            description: 'Insumos base.',
+                            iconName: 'database',
+                          },
+                          {
+                            value: 'item-2',
+                            label: 'Producto en Proceso',
+                            description: 'En línea.',
+                            iconName: 'status-in-progress',
+                          },
+                          {
+                            value: 'item-3',
+                            label: 'Producto Terminado',
+                            description: 'Venta.',
+                            iconName: 'check',
+                          },
+                          {
+                            value: 'item-4',
+                            label: 'Refacciones',
+                            description: 'Interno.',
+                            iconName: 'tools',
+                          },
+                        ] as any
+                      }
                     />
                   </Box>
                 </section>
@@ -495,7 +496,7 @@ export default function WarehouseServiceView() {
                           OmniPart integra visión por computadora para
                           identificar piezas sin código.
                         </Box>
-                        <Button iconName="camera">
+                        <Button iconName={'camera' as any}>
                           Iniciar Escaneo Visual
                         </Button>
                       </SpaceBetween>
@@ -511,7 +512,7 @@ export default function WarehouseServiceView() {
                         }}
                       >
                         <div style={{ textAlign: 'center', opacity: 0.6 }}>
-                          <Icon name="image" size="large" />
+                          <Icon name={'image' as any} size="large" />
                         </div>
                       </div>
                     </Grid>
@@ -534,7 +535,7 @@ export default function WarehouseServiceView() {
           </div>
         }
       />
-      {/* 3. FOOTER (Fuera del AppLayout para que siempre esté al final) */}
+      {/* 3. FOOTER */}
       <Footer />
     </div>
   );

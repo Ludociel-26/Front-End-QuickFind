@@ -50,8 +50,6 @@ const TRAFFIC_SERIES = [
   },
 ];
 
-// --- WRAPPER PRINCIPAL (CORREGIDO) ---
-// overflow: 'hidden' elimina el scroll del contenedor del widget
 const WidgetWrapper = ({
   children,
   loading,
@@ -68,24 +66,24 @@ const WidgetWrapper = ({
     }}
   >
     {loading ? (
-      <Box
-        padding="l"
-        textAlign="center"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        height="100%"
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+        }}
       >
-        <Spinner size="large" />
-      </Box>
+        <Box padding="l" textAlign="center">
+          <Spinner size="large" />
+        </Box>
+      </div>
     ) : (
       children
     )}
   </div>
 );
 
-// --- CONTENEDOR GRÁFICAS (CORREGIDO) ---
-// minHeight: 0 permite que la gráfica se encoja si el usuario hace pequeño el widget, sin generar scroll.
 const ResponsiveChartContainer = ({
   children,
 }: {
@@ -105,8 +103,6 @@ const ResponsiveChartContainer = ({
   </div>
 );
 
-// --- CONTENEDOR TABLAS (NUEVO) ---
-// Fuerza a la tabla a vivir dentro del espacio sin desbordar el widget
 const TableContainer = ({ children }: { children: React.ReactNode }) => (
   <div
     style={{
@@ -120,7 +116,6 @@ const TableContainer = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// 1. KPI RESUMEN
 export const InventorySummary = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <Box padding="s">
@@ -149,13 +144,8 @@ export const InventorySummary = memo(({ loading }: WidgetProps) => (
         </div>
         <div>
           <Box variant="awsui-key-label">Obsoletos</Box>
-          <Link
-            href="#"
-            variant="awsui-value-large"
-            fontSize="display-l"
-            color="text-status-inactive"
-          >
-            85
+          <Link href="#" variant="awsui-value-large" fontSize="display-l">
+            <span style={{ color: '#5f6b7a' }}>85</span>
           </Link>
         </div>
       </ColumnLayout>
@@ -163,7 +153,6 @@ export const InventorySummary = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 2. USO POR MÁQUINA
 export const MachineUsage = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <ResponsiveChartContainer>
@@ -193,7 +182,6 @@ export const MachineUsage = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 3. TRÁFICO
 export const MonthlyTraffic = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <ResponsiveChartContainer>
@@ -214,7 +202,6 @@ export const MonthlyTraffic = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 4. SISTEMA
 export const SystemHealth = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <ColumnLayout columns={1} borders="horizontal">
@@ -246,7 +233,6 @@ export const SystemHealth = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 5. CATEGORÍAS
 export const CategoryDistribution = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <ResponsiveChartContainer>
@@ -269,7 +255,6 @@ export const CategoryDistribution = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 6. ALERTAS STOCK (Usa TableContainer)
 export const StockAlerts = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <TableContainer>
@@ -298,7 +283,6 @@ export const StockAlerts = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 7. CONSULTAS (Usa TableContainer)
 export const RecentQueries = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <TableContainer>
@@ -329,7 +313,6 @@ export const RecentQueries = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 8. NOTIFICACIONES
 export const SystemNotifications = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <SpaceBetween size="s">
@@ -347,13 +330,12 @@ export const SystemNotifications = memo(({ loading }: WidgetProps) => (
   </WidgetWrapper>
 ));
 
-// 9. OBSOLETOS
 export const ObsoleteStats = memo(({ loading }: WidgetProps) => (
   <WidgetWrapper loading={loading}>
     <ColumnLayout columns={2} variant="text-grid">
       <div>
         <Box variant="awsui-key-label">Ref. Bajas</Box>
-        <Box fontSize="heading-xl" color="text-status-inactive">
+        <Box fontSize="heading-xl" color="text-body-secondary">
           12%
         </Box>
       </div>

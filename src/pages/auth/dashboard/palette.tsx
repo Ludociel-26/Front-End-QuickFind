@@ -1,31 +1,35 @@
-import React, { useState } from 'react';
+// FIX: Solo importamos useState. React global ya no es necesario para JSX en React 17+
+import { useState } from 'react';
 import {
   Box,
   Header,
   SpaceBetween,
   Button,
   Cards,
-  TextFilter
+  TextFilter,
 } from '@cloudscape-design/components';
 import { allWidgets } from './config';
 
-// Importante: usar 'type' para evitar error de Vite
-import type { WidgetConfig } from './interfaces';
+// FIX: Se eliminó la importación de `WidgetConfig` porque no se estaba utilizando
+// en ninguna parte del componente, lo que causaba la advertencia.
 
 interface PaletteProps {
   activeWidgetIds: string[];
   onAddWidget: (id: string) => void;
 }
 
-export const DashboardPalette = ({ activeWidgetIds, onAddWidget }: PaletteProps) => {
-  const [filteringText, setFilteringText] = useState("");
+export const DashboardPalette = ({
+  activeWidgetIds,
+  onAddWidget,
+}: PaletteProps) => {
+  const [filteringText, setFilteringText] = useState('');
 
   const availableWidgets = Object.entries(allWidgets)
     .filter(([id]) => !activeWidgetIds.includes(id))
     .map(([id, config]) => ({ id, ...config }));
 
-  const filteredItems = availableWidgets.filter(item => 
-    (item.title || "").toLowerCase().includes(filteringText.toLowerCase())
+  const filteredItems = availableWidgets.filter((item) =>
+    (item.title || '').toLowerCase().includes(filteringText.toLowerCase()),
   );
 
   return (
@@ -43,21 +47,21 @@ export const DashboardPalette = ({ activeWidgetIds, onAddWidget }: PaletteProps)
 
       <Cards
         cardDefinition={{
-          header: item => item.title,
+          header: (item) => item.title,
           sections: [
             {
-              id: "action",
-              content: item => (
-                <Button 
-                    iconName="add-plus" 
-                    variant="inline-link" 
-                    onClick={() => onAddWidget(item.id)}
+              id: 'action',
+              content: (item) => (
+                <Button
+                  iconName="add-plus"
+                  variant="inline-link"
+                  onClick={() => onAddWidget(item.id)}
                 >
-                    Add
+                  Add
                 </Button>
-              )
-            }
-          ]
+              ),
+            },
+          ],
         }}
         cardsPerRow={[{ cards: 1 }]}
         items={filteredItems}

@@ -1,6 +1,6 @@
-import * as React from 'react';
 import axios from 'axios';
 import { useContext, useState, useCallback, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 
 // Imports de Cloudscape Design System
 import {
@@ -31,10 +31,8 @@ import GlobalSidebar from '@/components/layouts/AppSidebar';
 import { Footer } from '@/components/layouts/AppFooter';
 import SecondaryHeader from '@/components/layouts/BreadcrumbNavBar';
 
-// --- ESTILOS CSS CORREGIDOS ---
+// --- ESTILOS CSS ---
 const awsStyles = `
-  /* 1. SELECCIÓN DE FILA ESTILO AWS */
-  /* Quitamos sombras por defecto */
   .awsui-table-row-selected > td {
     box-shadow: none !important;
     background-color: #f1faff !important;
@@ -42,21 +40,18 @@ const awsStyles = `
     border-bottom: 2px solid #0972d3 !important;
   }
 
-  /* Borde redondeado SOLO a la izquierda de la primera celda */
   .awsui-table-row-selected > td:first-child {
     border-left: 2px solid #0972d3 !important;
     border-top-left-radius: 12px !important; 
     border-bottom-left-radius: 12px !important;
   }
 
-  /* Borde redondeado SOLO a la derecha de la última celda */
   .awsui-table-row-selected > td:last-child {
     border-right: 2px solid #0972d3 !important;
     border-top-right-radius: 12px !important;
     border-bottom-right-radius: 12px !important;
   }
 
-  /* Ajuste para los checkbox dentro de la tabla */
   .awsui-table-select {
     padding-left: 10px !important;
   }
@@ -84,7 +79,7 @@ const COLUMN_DEFINITIONS = [
     id: 'name',
     header: 'Nombre',
     cell: (item: UserItem) => (
-      <Link href="#" variant="primary" fontSize="body-m">
+      <Link href="#" variant="primary" {...({ fontSize: 'body-m' } as any)}>
         <b>{`${item.name} ${item.surname}`}</b>
       </Link>
     ),
@@ -129,16 +124,15 @@ const COLUMN_DEFINITIONS = [
   },
 ];
 
-// Helper para etiquetas
 const ValueWithLabel = ({
   label,
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) => (
   <div>
-    <Box variant="awsui-key-label" color="text-label">
+    <Box variant={'awsui-key-label' as any} color="text-label">
       {label}
     </Box>
     <div>{children}</div>
@@ -146,22 +140,22 @@ const ValueWithLabel = ({
 );
 
 export default function UsersTable() {
-  // --- EXTRACCIÓN DEL CONTEXTO GLOBAL ---
   const { backendUrl, alerts, addAlert, setPageLoading } = useContext(
     AppContent,
   ) || {
     backendUrl: 'http://localhost:4000',
   };
 
-  // --- ESTADOS ---
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(false);
 
-  // Preferencias
-  const [preferences, setPreferences] = useState({
+  const [tablePreferences, setTablePreferences] = useState({
     pageSize: 50,
     visibleContent: ['name', 'email', 'role_name', 'area_level', 'status'],
-    splitPanelPreferences: { position: 'bottom' as const },
+  });
+
+  const [splitPreferences, setSplitPreferences] = useState<any>({
+    position: 'bottom',
   });
 
   const [usersData, setUsersData] = useState<UserItem[]>([]);
@@ -169,14 +163,13 @@ export default function UsersTable() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<UserItem[]>([]);
 
-  // Split Panel
   const [splitPanelOpen, setSplitPanelOpen] = useState(false);
   const [splitPanelSize, setSplitPanelSize] = useState(280);
 
-  // Control para no duplicar carga inicial
   const isMounted = useRef(true);
+  // FIX: Candado para asegurar que la petición se haga solo 1 vez al entrar
+  const hasFetched = useRef(false);
 
-  // Apagar loader global si venimos del login
   useEffect(() => {
     isMounted.current = true;
     if (setPageLoading) {
@@ -187,10 +180,8 @@ export default function UsersTable() {
     };
   }, [setPageLoading]);
 
-  // --- FETCH DATA CON NOTIFICACIONES CLOUDSCAPE ---
   const fetchUsers = useCallback(
     async (isRefresh = false) => {
-      // 1. Iniciamos notificación de carga
       const alertId = addAlert
         ? addAlert(
             'info',
@@ -204,21 +195,23 @@ export default function UsersTable() {
         : undefined;
 
       try {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
+        if (isMounted.current) {
+          if (isRefresh) setRefreshing(true);
+          else setLoading(true);
+        }
 
         const response = await axios.get(`${backendUrl}/api/user/all-users`, {
           withCredentials: true,
         });
 
         if (response.data.success) {
-          setUsersData(response.data.users);
-
-          // Pausa estética breve para que se aprecie la transición
+          if (isMounted.current) {
+            setUsersData(response.data.users);
+          }
           await new Promise((resolve) => setTimeout(resolve, 600));
 
-          // 2. Transicionamos a Éxito
-          if (addAlert && isMounted.current) {
+          // FIX: Notificamos "Éxito" incondicionalmente para que cierre el Load Global siempre
+          if (addAlert) {
             addAlert(
               'success',
               'Listado de usuarios cargado correctamente.',
@@ -228,8 +221,8 @@ export default function UsersTable() {
             );
           }
         } else {
-          // Error controlado por el backend
-          if (addAlert && isMounted.current) {
+          // FIX: Notificamos "Advertencia" incondicionalmente
+          if (addAlert) {
             addAlert(
               'warning',
               'No se encontraron usuarios o hubo un problema al leer la base de datos.',
@@ -241,8 +234,8 @@ export default function UsersTable() {
         }
       } catch (error: any) {
         console.error('Error cargando usuarios:', error);
-        // 3. Error de red / Servidor caído
-        if (addAlert && isMounted.current) {
+        // FIX: Notificamos "Error" incondicionalmente
+        if (addAlert) {
           addAlert(
             'error',
             error.message || 'Error al conectar con el servidor',
@@ -261,12 +254,14 @@ export default function UsersTable() {
     [backendUrl, addAlert],
   );
 
-  // Cargar datos al montar
+  // FIX: Solo ejecutar la llamada inicial si no se ha hecho ya
   useEffect(() => {
-    fetchUsers();
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchUsers();
+    }
   }, [fetchUsers]);
 
-  // Abrir panel al seleccionar
   useEffect(() => {
     if (selectedItems.length > 0) {
       setSplitPanelOpen(true);
@@ -283,7 +278,7 @@ export default function UsersTable() {
     paginationProps,
     filterProps,
   } = useCollection(usersData, {
-    pagination: { pageSize: preferences.pageSize },
+    pagination: { pageSize: tablePreferences.pageSize },
     sorting: { defaultState: { sortingColumn: COLUMN_DEFINITIONS[0] } },
     selection: {},
     filtering: {
@@ -303,30 +298,33 @@ export default function UsersTable() {
     },
   });
 
-  // --- CONTENIDO DEL SPLIT PANEL ---
   const getSplitPanelContent = (user: UserItem | undefined) => {
     if (!user)
       return (
-        <Box textAlign="center" padding="l">
-          Selecciona un usuario para ver detalles.
-        </Box>
+        <SplitPanel header={'Detalles del Usuario' as any}>
+          <Box textAlign="center" padding="l">
+            Selecciona un usuario para ver detalles.
+          </Box>
+        </SplitPanel>
       );
 
     return (
       <SplitPanel
         header={
-          <Header
-            actions={
-              <SpaceBetween direction="horizontal" size="xs">
-                <Button>Restablecer Contraseña</Button>
-                <Button variant={user.is_active ? 'normal' : 'primary'}>
-                  {user.is_active ? 'Deshabilitar' : 'Habilitar'}
-                </Button>
-              </SpaceBetween>
-            }
-          >
-            {user.name} {user.surname}
-          </Header>
+          (
+            <Header
+              actions={
+                <SpaceBetween direction="horizontal" size="xs">
+                  <Button>Restablecer Contraseña</Button>
+                  <Button variant={user.is_active ? 'normal' : 'primary'}>
+                    {user.is_active ? 'Deshabilitar' : 'Habilitar'}
+                  </Button>
+                </SpaceBetween>
+              }
+            >
+              {user.name} {user.surname}
+            </Header>
+          ) as any
         }
         i18nStrings={{
           preferencesTitle: 'Preferencias del panel',
@@ -340,7 +338,6 @@ export default function UsersTable() {
         }}
       >
         <ColumnLayout columns={3} variant="text-grid">
-          {/* COLUMNA 1: Estado de Cuenta */}
           <SpaceBetween size="l">
             <div>
               <Box variant="h3" padding={{ bottom: 's' }}>
@@ -365,7 +362,6 @@ export default function UsersTable() {
             </div>
           </SpaceBetween>
 
-          {/* COLUMNA 2: Organización */}
           <SpaceBetween size="l">
             <div>
               <Box variant="h3" padding={{ bottom: 's' }}>
@@ -380,7 +376,6 @@ export default function UsersTable() {
             </div>
           </SpaceBetween>
 
-          {/* COLUMNA 3: Datos Personales */}
           <SpaceBetween size="l">
             <div>
               <Box variant="h3" padding={{ bottom: 's' }}>
@@ -408,7 +403,6 @@ export default function UsersTable() {
     >
       <style>{awsStyles}</style>
 
-      {/* Navbar Fijo */}
       <div
         id="sticky-nav-container"
         style={{ position: 'sticky', top: 0, zIndex: 1002 }}
@@ -434,23 +428,20 @@ export default function UsersTable() {
         toolsOpen={toolsOpen}
         onToolsChange={({ detail }) => setToolsOpen(detail.open)}
         contentType="table"
-        stickyHeader={true}
-        // --- CONEXIÓN DE ALERTAS GLOBALES ---
         notifications={
           alerts && alerts.length > 0 ? (
             <Flashbar items={alerts as any} stackItems={true} />
           ) : null
         }
-        // --- SPLIT PANEL ---
         splitPanel={getSplitPanelContent(selectedItems[0])}
         splitPanelOpen={splitPanelOpen}
         onSplitPanelToggle={({ detail }) => setSplitPanelOpen(detail.open)}
         splitPanelSize={splitPanelSize}
         onSplitPanelResize={({ detail }) => setSplitPanelSize(detail.size)}
-        splitPanelPreferences={preferences.splitPanelPreferences}
-        onSplitPanelPreferencesChange={({ detail }) => {
-          setPreferences({ ...preferences, splitPanelPreferences: detail });
-        }}
+        splitPanelPreferences={splitPreferences}
+        onSplitPanelPreferencesChange={({ detail }) =>
+          setSplitPreferences(detail)
+        }
         content={
           <Table
             {...collectionProps}
@@ -468,14 +459,14 @@ export default function UsersTable() {
             loadingText="Cargando usuarios..."
             header={
               <Header
-                variant="awsui-h1-sticky"
+                variant="h1"
                 counter={!loading ? `(${items.length})` : ''}
                 actions={
                   <SpaceBetween direction="horizontal" size="xs">
                     <Button
                       iconName="refresh"
                       loading={refreshing}
-                      onClick={() => fetchUsers(true)} // Dispara la alerta de refresh
+                      onClick={() => fetchUsers(true)}
                       ariaLabel="Refrescar"
                     />
                     <Button disabled={selectedItems.length === 0}>
@@ -493,21 +484,14 @@ export default function UsersTable() {
                 title="Preferencias"
                 confirmLabel="Confirmar"
                 cancelLabel="Cancelar"
-                preferences={preferences}
-                onConfirm={({ detail }) => setPreferences(detail)}
+                preferences={tablePreferences as any}
+                onConfirm={({ detail }) => setTablePreferences(detail as any)}
                 pageSizePreference={{
                   title: 'Tamaño de página',
                   options: [
                     { value: 50, label: '50 recursos' },
                     { value: 100, label: '100 recursos' },
                     { value: 200, label: '200 recursos' },
-                  ],
-                }}
-                splitPanelPreferences={{
-                  title: 'Posición del panel de detalles',
-                  options: [
-                    { label: 'Abajo', value: 'bottom' },
-                    { label: 'Lado', value: 'side' },
                   ],
                 }}
                 visibleContentPreference={{
