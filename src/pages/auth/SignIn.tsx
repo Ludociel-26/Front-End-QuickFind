@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
 
 import {
   Sun,
@@ -25,9 +24,9 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-// --- Cloudscape Imports ---
 import '@cloudscape-design/global-styles/index.css';
-import { Button } from '@cloudscape-design/components';
+// 1. IMPORTAMOS Flashbar
+import { Button, Flashbar } from '@cloudscape-design/components';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppContent } from '@/context/AppContext';
 
@@ -38,8 +37,10 @@ import bg2 from '@/assets/login/f2.png';
 import bg3 from '@/assets/login/f3.png';
 import bg4 from '@/assets/login/f4.png';
 import bg5 from '@/assets/login/f5.png';
+import bg6 from '@/assets/login/f6.png';
+import bg7 from '@/assets/login/f7.png';
+import bg8 from '@/assets/login/f8.png';
 
-// --- UTILIDADES ---
 const validatePassword = (pass: string) => {
   return {
     length: pass.length >= 8,
@@ -55,8 +56,6 @@ const calculateStrength = (checks: any) => {
   const valid = Object.values(checks).filter(Boolean).length;
   return (valid / total) * 100;
 };
-
-// --- COMPONENTES UI AUXILIARES ---
 
 const AnimatedInput = ({
   type,
@@ -264,9 +263,9 @@ const InfoPanel = ({
   nextTestimonial,
   t,
 }: any) => {
-  const features = t('features');
+  const features = t('features') || [];
   const randomImage = useMemo(() => {
-    const images = [bg1, bg2, bg3, bg4, bg5];
+    const images = [bg1, bg2, bg3, bg4, bg5, bg6, bg7, bg8];
     return images[Math.floor(Math.random() * images.length)];
   }, []);
   return (
@@ -297,7 +296,7 @@ const InfoPanel = ({
           <h2
             className={`text-xl font-bold tracking-tight opacity-90 ${isDarkMode ? 'text-white' : 'text-blue-950'}`}
           >
-            Experiencia QuickFind
+            QuickFind Experience
           </h2>
           <div className="h-20 relative">
             <AnimatePresence mode="wait">
@@ -388,12 +387,10 @@ const InfoPanel = ({
   );
 };
 
-// --- COMPONENTE PRINCIPAL ---
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
-  // Hooks
   const { t, language } = useLanguage();
   const appContext = useContext(AppContent);
 
@@ -401,35 +398,25 @@ export default function Login() {
     throw new Error('AppContent must be used within AppContextProvider');
   }
 
-  // Desestructuramos setPageLoading para controlar la barra global
+  // 2. EXTRAEMOS alerts
   const {
     theme,
     isDark,
     toggleTheme,
     backendUrl,
     setIsLoggedin,
-    isLoggedin, // <--- IMPORTANTE: Traer isLoggedin
+    isLoggedin,
     getUserData,
     userData,
     setPageLoading,
+    addAlert,
+    alerts, // <-- Agregamos esta línea
   } = appContext;
 
-  // ------------------------------------------------------------
-  // FIX: GUARDIA DE SEGURIDAD VISUAL (Race Condition Fix)
-  // ------------------------------------------------------------
-  // Si ya estamos logueados, NO renderizamos el formulario.
-  // Esto evita el "flash" antes de que el useEffect redirija.
-  if (isLoggedin) {
-    return null;
-  }
-  // ------------------------------------------------------------
-
-  // Estados visuales
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ESTADO UNIFICADO DEL FORMULARIO
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
@@ -442,7 +429,6 @@ export default function Login() {
 
   const [passChecks, setPassChecks] = useState(validatePassword(''));
 
-  // Manejador de Inputs
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
@@ -491,16 +477,23 @@ export default function Login() {
   const isFormValid =
     strengthPercent === 100 && formData.password === formData.confirmPassword;
 
-  // --- LÓGICA DE SUBMIT ---
+  // LÓGICA DE SUBMIT USANDO LA ALERTA GLOBAL
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPageLoading(true);
+
+    const alertId = addAlert(
+      'info',
+      isLogin ? 'Autenticando credenciales...' : 'Registrando usuario...',
+      'Procesando',
+      undefined,
+      true,
+    );
 
     try {
       axios.defaults.withCredentials = true;
 
       if (!isLogin) {
-        // REGISTRO
         const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
           name: formData.name,
           surname: formData.surname,
@@ -511,49 +504,112 @@ export default function Login() {
         });
 
         if (data.success) {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-          toast.success('Cuenta creada exitosamente');
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          addAlert(
+            'success',
+            'Cuenta creada exitosamente. Bienvenido.',
+            'Éxito',
+            alertId,
+            false,
+          );
           setIsLoggedin(true);
           await getUserData();
         } else {
-          toast.error(data.message);
+          addAlert(
+            'warning',
+            data.message,
+            'Validación Fallida',
+            alertId,
+            false,
+          );
           setPageLoading(false);
         }
       } else {
-        // LOGIN
         const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
           email: formData.email,
           password: formData.password,
         });
 
         if (data.success) {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          addAlert(
+            'success',
+            'Sesión iniciada correctamente.',
+            'Bienvenido',
+            alertId,
+            false,
+          );
           setIsLoggedin(true);
           await getUserData();
         } else {
-          toast.error(data.message);
+          addAlert(
+            'warning',
+            data.message,
+            'Autenticación Fallida',
+            alertId,
+            false,
+          );
           setPageLoading(false);
         }
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || error.message);
+      if (error.response) {
+        const status = error.response.status;
+        const serverMessage = error.response.data?.message || '';
+
+        if (status === 503 || serverMessage.includes('#DB-503')) {
+          addAlert(
+            'error',
+            'La API no pudo establecer comunicación con la base de datos PostgreSQL.',
+            'Service Unavailable [Network Error #DB-503]',
+            alertId,
+            false,
+          );
+        } else {
+          addAlert(
+            'error',
+            serverMessage || 'Error desconocido en el servidor.',
+            `Server Error [HTTP ${status}]`,
+            alertId,
+            false,
+          );
+        }
+      } else if (error.request) {
+        addAlert(
+          'error',
+          'No se pudo alcanzar el microservicio de autenticación. Verifique si la red está caída.',
+          'Connection Refused [#API-502]',
+          alertId,
+          false,
+        );
+      } else {
+        addAlert(
+          'error',
+          error.message,
+          'Application Error [Client-Side]',
+          alertId,
+          false,
+        );
+      }
       setPageLoading(false);
     }
   };
 
-  // --- LÓGICA DE REDIRECCIÓN POR ROLES ---
-  // Mantenemos esto para manejar el momento exacto en que userData cambia de null a objeto.
   useEffect(() => {
     if (userData && userData.role && isLoggedin) {
       const allowedRoles = [1, 2, 3, 4];
       if (allowedRoles.includes(userData.role)) {
         navigate('/dashboard');
       } else {
-        toast.error('Acceso denegado: Rol no autorizado.');
+        addAlert(
+          'error',
+          'El rol asignado no cuenta con los privilegios necesarios para acceder a este módulo.',
+          'Access Denied [IAM-403]',
+        );
         setPageLoading(false);
       }
     }
-  }, [userData, isLoggedin, navigate, setPageLoading]);
+  }, [userData, isLoggedin, navigate, setPageLoading, addAlert]);
 
   const inputClassName = `w-full px-4 py-3.5 rounded-xl text-sm transition-all duration-300 outline-none border backdrop-blur-sm ${
     isDark
@@ -561,7 +617,12 @@ export default function Login() {
       : 'bg-white/60 border-gray-400 text-gray-900 placeholder-gray-600 focus:border-blue-600 focus:bg-white/80 focus:ring-2 focus:ring-blue-100/50'
   }`;
 
-  const validationLabels = t('passStrength');
+  const validationLabels = t('passStrength') || [];
+
+  // Regla de Hooks: Este return condicional siempre debe ir después de TODOS los useState/useEffect
+  if (isLoggedin) {
+    return null;
+  }
 
   return (
     <>
@@ -574,7 +635,7 @@ export default function Login() {
             -webkit-text-fill-color: ${isDark ? 'white' : 'black'} !important;
             transition: background-color 5000s ease-in-out 0s;
         }
-    `}</style>
+      `}</style>
 
       <div
         className={`min-h-[100dvh] w-full relative flex items-center justify-center p-4 transition-colors duration-500 overflow-hidden ${isDark ? 'bg-[#050505]' : 'bg-gray-200'}`}
@@ -736,7 +797,7 @@ export default function Login() {
                           </span>
                         </label>
                         <a
-                          href="#"
+                          href="/reset-password"
                           className={`font-bold hover:underline ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
                         >
                           {t('forgotPass')}
@@ -778,7 +839,6 @@ export default function Login() {
                       </div>
 
                       <div className="flex-1 lg:overflow-y-auto custom-scrollbar pr-4 space-y-3 py-2 min-h-0">
-                        {/* FILA 1: Nombre y Apellido */}
                         <div className="grid grid-cols-2 gap-3">
                           <AnimatedInput
                             type="text"
@@ -804,7 +864,6 @@ export default function Login() {
                           />
                         </div>
 
-                        {/* FILA 2: Email */}
                         <AnimatedInput
                           type="email"
                           name="email"
@@ -817,7 +876,6 @@ export default function Login() {
                           isDarkMode={isDark}
                         />
 
-                        {/* FILA 3: País y Fecha */}
                         <div className="grid grid-cols-2 gap-3">
                           <CountrySelect
                             className={inputClassName}
@@ -962,6 +1020,13 @@ export default function Login() {
             t={t}
           />
         </motion.div>
+
+        {/* 3. RENDERIZADO LOCAL: Flashbar en la parte inferior solo para el Login */}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[600px] px-4 pointer-events-none transition-all duration-300">
+          <div className="pointer-events-auto shadow-2xl rounded-xl overflow-hidden">
+            <Flashbar items={alerts as any} stackItems={true} />
+          </div>
+        </div>
       </div>
     </>
   );

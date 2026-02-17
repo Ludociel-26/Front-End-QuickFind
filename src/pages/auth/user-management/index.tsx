@@ -1,7 +1,8 @@
 import * as React from 'react';
 import axios from 'axios';
-import { useContext } from 'react';
-// 1. Imports de Cloudscape
+import { useContext, useState, useCallback, useEffect, useRef } from 'react';
+
+// Imports de Cloudscape Design System
 import {
   Table,
   Box,
@@ -17,25 +18,58 @@ import {
   SplitPanel,
   ColumnLayout,
   Link,
+  CollectionPreferences,
 } from '@cloudscape-design/components';
 import { useCollection } from '@cloudscape-design/collection-hooks';
 
-// Contexto para obtener la URL del backend
-import { AppContent } from '@/context/AppContext'; // Ajusta la ruta si es necesario
+// Contexto Global
+import { AppContent } from '@/context/AppContext';
 
 // Imports Locales
-import Navbar from '../../layouts/navbar/Navbar';
-import GlobalSidebar from '../../layouts/sidebar/Sidebar';
-import RouteTracker from '../../layouts/RouteTracker';
+import Navbar from '@/components/layouts/AppHeader';
+import GlobalSidebar from '@/components/layouts/AppSidebar';
+import { Footer } from '@/components/layouts/AppFooter';
+import SecondaryHeader from '@/components/layouts/BreadcrumbNavBar';
 
-// --- DEFINICIÓN DE TIPOS SEGÚN TU JSON ---
+// --- ESTILOS CSS CORREGIDOS ---
+const awsStyles = `
+  /* 1. SELECCIÓN DE FILA ESTILO AWS */
+  /* Quitamos sombras por defecto */
+  .awsui-table-row-selected > td {
+    box-shadow: none !important;
+    background-color: #f1faff !important;
+    border-top: 2px solid #0972d3 !important;
+    border-bottom: 2px solid #0972d3 !important;
+  }
+
+  /* Borde redondeado SOLO a la izquierda de la primera celda */
+  .awsui-table-row-selected > td:first-child {
+    border-left: 2px solid #0972d3 !important;
+    border-top-left-radius: 12px !important; 
+    border-bottom-left-radius: 12px !important;
+  }
+
+  /* Borde redondeado SOLO a la derecha de la última celda */
+  .awsui-table-row-selected > td:last-child {
+    border-right: 2px solid #0972d3 !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
+  }
+
+  /* Ajuste para los checkbox dentro de la tabla */
+  .awsui-table-select {
+    padding-left: 10px !important;
+  }
+`;
+
+// --- INTERFACES ---
 export interface UserItem {
   id: string;
   email: string;
   rol_id: number;
-  role_name: string; // Dato importante para la tabla
+  role_name: string;
   area_id: number;
-  area_level: string; // Dato importante para la tabla
+  area_level: string;
   name: string;
   surname: string;
   country: string;
@@ -44,39 +78,44 @@ export interface UserItem {
   is_active: boolean;
 }
 
-// --- DEFINICIÓN DE COLUMNAS (Adaptadas a tu JSON) ---
+// --- COLUMNAS ---
 const COLUMN_DEFINITIONS = [
   {
     id: 'name',
     header: 'Nombre',
     cell: (item: UserItem) => (
-      <Link href="#">{`${item.name} ${item.surname}`}</Link>
+      <Link href="#" variant="primary" fontSize="body-m">
+        <b>{`${item.name} ${item.surname}`}</b>
+      </Link>
     ),
     sortingField: 'name',
     isRowHeader: true,
+    minWidth: 180,
   },
   {
     id: 'email',
     header: 'Correo Electrónico',
     cell: (item: UserItem) => item.email,
     sortingField: 'email',
+    minWidth: 200,
   },
   {
     id: 'role_name',
     header: 'Rol',
     cell: (item: UserItem) => (
-      // Muestra 'admin' en azul y otros en gris
       <Badge color={item.role_name === 'admin' ? 'blue' : 'grey'}>
         {item.role_name || 'Sin Rol'}
       </Badge>
     ),
     sortingField: 'role_name',
+    minWidth: 120,
   },
   {
     id: 'area_level',
     header: 'Área',
     cell: (item: UserItem) => item.area_level || 'General',
     sortingField: 'area_level',
+    minWidth: 140,
   },
   {
     id: 'status',
@@ -90,7 +129,7 @@ const COLUMN_DEFINITIONS = [
   },
 ];
 
-// Componente auxiliar para detalles
+// Helper para etiquetas
 const ValueWithLabel = ({
   label,
   children,
@@ -107,49 +146,135 @@ const ValueWithLabel = ({
 );
 
 export default function UsersTable() {
-  // Obtenemos URL del backend del contexto
-  const { backendUrl } = useContext(AppContent) || {
+  // --- EXTRACCIÓN DEL CONTEXTO GLOBAL ---
+  const { backendUrl, alerts, addAlert, setPageLoading } = useContext(
+    AppContent,
+  ) || {
     backendUrl: 'http://localhost:4000',
   };
 
-  const [usersData, setUsersData] = React.useState<UserItem[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [selectedItems, setSelectedItems] = React.useState<UserItem[]>([]);
+  // --- ESTADOS ---
+  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
-  const [splitPanelPreferences, setSplitPanelPreferences] = React.useState({
-    position: 'bottom' as const,
+  // Preferencias
+  const [preferences, setPreferences] = useState({
+    pageSize: 50,
+    visibleContent: ['name', 'email', 'role_name', 'area_level', 'status'],
+    splitPanelPreferences: { position: 'bottom' as const },
   });
-  const [isSplitPanelOpen, setIsSplitPanelOpen] = React.useState(false);
 
-  // --- EFECTO: CARGAR DATOS DE LA API ---
-  React.useEffect(() => {
-    const fetchUsers = async () => {
+  const [usersData, setUsersData] = useState<UserItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<UserItem[]>([]);
+
+  // Split Panel
+  const [splitPanelOpen, setSplitPanelOpen] = useState(false);
+  const [splitPanelSize, setSplitPanelSize] = useState(280);
+
+  // Control para no duplicar carga inicial
+  const isMounted = useRef(true);
+
+  // Apagar loader global si venimos del login
+  useEffect(() => {
+    isMounted.current = true;
+    if (setPageLoading) {
+      setPageLoading(false);
+    }
+    return () => {
+      isMounted.current = false;
+    };
+  }, [setPageLoading]);
+
+  // --- FETCH DATA CON NOTIFICACIONES CLOUDSCAPE ---
+  const fetchUsers = useCallback(
+    async (isRefresh = false) => {
+      // 1. Iniciamos notificación de carga
+      const alertId = addAlert
+        ? addAlert(
+            'info',
+            isRefresh
+              ? 'Actualizando lista de usuarios...'
+              : 'Obteniendo usuarios de la base de datos...',
+            'Sincronizando',
+            undefined,
+            true,
+          )
+        : undefined;
+
       try {
-        setLoading(true);
-        // Usamos withCredentials para que pasen las cookies si las usas
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
         const response = await axios.get(`${backendUrl}/api/user/all-users`, {
           withCredentials: true,
         });
 
         if (response.data.success) {
           setUsersData(response.data.users);
+
+          // Pausa estética breve para que se aprecie la transición
+          await new Promise((resolve) => setTimeout(resolve, 600));
+
+          // 2. Transicionamos a Éxito
+          if (addAlert && isMounted.current) {
+            addAlert(
+              'success',
+              'Listado de usuarios cargado correctamente.',
+              'Éxito',
+              alertId,
+              false,
+            );
+          }
+        } else {
+          // Error controlado por el backend
+          if (addAlert && isMounted.current) {
+            addAlert(
+              'warning',
+              'No se encontraron usuarios o hubo un problema al leer la base de datos.',
+              'Advertencia',
+              alertId,
+              false,
+            );
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error cargando usuarios:', error);
+        // 3. Error de red / Servidor caído
+        if (addAlert && isMounted.current) {
+          addAlert(
+            'error',
+            error.message || 'Error al conectar con el servidor',
+            'Fallo de Red',
+            alertId,
+            false,
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
-    };
+    },
+    [backendUrl, addAlert],
+  );
 
+  // Cargar datos al montar
+  useEffect(() => {
     fetchUsers();
-  }, [backendUrl]);
+  }, [fetchUsers]);
 
-  React.useEffect(() => {
-    if (selectedItems.length > 0) setIsSplitPanelOpen(true);
-    else setIsSplitPanelOpen(false);
+  // Abrir panel al seleccionar
+  useEffect(() => {
+    if (selectedItems.length > 0) {
+      setSplitPanelOpen(true);
+    } else {
+      setSplitPanelOpen(false);
+    }
   }, [selectedItems]);
 
-  // Hook de Cloudscape para manejar paginación y filtros con los datos de la API
   const {
     items,
     actions,
@@ -158,7 +283,7 @@ export default function UsersTable() {
     paginationProps,
     filterProps,
   } = useCollection(usersData, {
-    pagination: { pageSize: 10 },
+    pagination: { pageSize: preferences.pageSize },
     sorting: { defaultState: { sortingColumn: COLUMN_DEFINITIONS[0] } },
     selection: {},
     filtering: {
@@ -178,7 +303,7 @@ export default function UsersTable() {
     },
   });
 
-  // --- CONTENIDO DEL PANEL DE DETALLE (Adaptado a tu JSON) ---
+  // --- CONTENIDO DEL SPLIT PANEL ---
   const getSplitPanelContent = (user: UserItem | undefined) => {
     if (!user)
       return (
@@ -194,15 +319,9 @@ export default function UsersTable() {
             actions={
               <SpaceBetween direction="horizontal" size="xs">
                 <Button>Restablecer Contraseña</Button>
-                {user.is_active ? (
-                  <Button variant="normal" iconName="status-stopped">
-                    Deshabilitar
-                  </Button>
-                ) : (
-                  <Button variant="primary" iconName="status-positive">
-                    Habilitar
-                  </Button>
-                )}
+                <Button variant={user.is_active ? 'normal' : 'primary'}>
+                  {user.is_active ? 'Deshabilitar' : 'Habilitar'}
+                </Button>
               </SpaceBetween>
             }
           >
@@ -210,160 +329,213 @@ export default function UsersTable() {
           </Header>
         }
         i18nStrings={{
-          preferencesTitle: 'Preferencias',
-          preferencesPositionLabel: 'Posición',
+          preferencesTitle: 'Preferencias del panel',
+          preferencesPositionLabel: 'Posición del panel',
           preferencesPositionDescription: 'Elige posición',
           preferencesPositionSide: 'Lado',
           preferencesPositionBottom: 'Abajo',
-          preferencesConfirm: 'OK',
-          preferencesCancel: 'Cancelar',
-          closeButtonAriaLabel: 'Cerrar',
-          openButtonAriaLabel: 'Abrir',
-          resizeHandleAriaLabel: 'Redimensionar',
+          closeButtonAriaLabel: 'Cerrar panel',
+          openButtonAriaLabel: 'Abrir panel',
+          resizeHandleAriaLabel: 'Redimensionar panel',
         }}
       >
         <ColumnLayout columns={3} variant="text-grid">
+          {/* COLUMNA 1: Estado de Cuenta */}
           <SpaceBetween size="l">
             <div>
-              <Box variant="h3">Estado de Cuenta</Box>
-              <SpaceBetween size="s">
-                <ValueWithLabel label="Verificación de Email">
+              <Box variant="h3" padding={{ bottom: 's' }}>
+                Estado de Cuenta
+              </Box>
+              <SpaceBetween size="m">
+                <ValueWithLabel label="Email">
                   {user.is_account_verified ? (
                     <StatusIndicator type="success">Verificado</StatusIndicator>
                   ) : (
                     <StatusIndicator type="pending">Pendiente</StatusIndicator>
                   )}
                 </ValueWithLabel>
-                <ValueWithLabel label="Acceso al Sistema">
-                  {user.is_active ? (
-                    <StatusIndicator type="success">Habilitado</StatusIndicator>
-                  ) : (
-                    <StatusIndicator type="stopped">Bloqueado</StatusIndicator>
-                  )}
+                <ValueWithLabel label="Acceso">
+                  <StatusIndicator
+                    type={user.is_active ? 'success' : 'stopped'}
+                  >
+                    {user.is_active ? 'Habilitado' : 'Deshabilitado'}
+                  </StatusIndicator>
                 </ValueWithLabel>
               </SpaceBetween>
             </div>
           </SpaceBetween>
 
+          {/* COLUMNA 2: Organización */}
           <SpaceBetween size="l">
             <div>
-              <Box variant="h3">Información Organizacional</Box>
-              <SpaceBetween size="s">
-                <ValueWithLabel label="Rol Asignado">
+              <Box variant="h3" padding={{ bottom: 's' }}>
+                Organización
+              </Box>
+              <SpaceBetween size="m">
+                <ValueWithLabel label="Rol">
                   <Badge color="blue">{user.role_name}</Badge>
                 </ValueWithLabel>
-                <ValueWithLabel label="Área / Departamento">
-                  {user.area_level} (ID: {user.area_id})
-                </ValueWithLabel>
+                <ValueWithLabel label="Área">{user.area_level}</ValueWithLabel>
               </SpaceBetween>
             </div>
           </SpaceBetween>
 
+          {/* COLUMNA 3: Datos Personales */}
           <SpaceBetween size="l">
             <div>
-              <Box variant="h3">Datos Personales</Box>
-              <SpaceBetween size="s">
-                <ValueWithLabel label="Nombre Completo">
+              <Box variant="h3" padding={{ bottom: 's' }}>
+                Datos Personales
+              </Box>
+              <SpaceBetween size="m">
+                <ValueWithLabel label="Nombre">
                   {user.name} {user.surname}
                 </ValueWithLabel>
                 <ValueWithLabel label="Correo">{user.email}</ValueWithLabel>
                 <ValueWithLabel label="País">{user.country}</ValueWithLabel>
-                <ValueWithLabel label="Fecha Nacimiento">
-                  {new Date(user.birth_date).toLocaleDateString()}
-                </ValueWithLabel>
               </SpaceBetween>
             </div>
           </SpaceBetween>
         </ColumnLayout>
+
+        <Box padding="s"></Box>
       </SplitPanel>
     );
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* 1. Navbar Fijo */}
-      <div style={{ flexShrink: 0, zIndex: 1001 }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}
+    >
+      <style>{awsStyles}</style>
+
+      {/* Navbar Fijo */}
+      <div
+        id="sticky-nav-container"
+        style={{ position: 'sticky', top: 0, zIndex: 1002 }}
+      >
         <Navbar />
-      </div>
-
-      {/* 2. Área Principal */}
-      <div style={{ flexGrow: 1, overflow: 'hidden' }}>
-        <AppLayout
-          navigation={<GlobalSidebar />}
-          toolsHide={true}
-          contentType="table"
-          stickyHeader={true}
-          breadcrumbs={
-            <RouteTracker
-              items={[
-                { text: 'Administración', href: '#' },
-                { text: 'Usuarios', href: '/users' },
-              ]}
-            />
-          }
-          content={
-            <Box padding={{ top: 's' }}>
-              <SpaceBetween size="m">
-                <Flashbar
-                  items={[
-                    {
-                      type: 'info',
-                      dismissible: true,
-                      content: 'Listado de usuarios cargado desde el servidor.',
-                      id: 'message_1',
-                    },
-                  ]}
-                />
-
-                <Table
-                  {...collectionProps}
-                  selectedItems={selectedItems}
-                  onSelectionChange={({ detail }) =>
-                    setSelectedItems(detail.selectedItems as UserItem[])
-                  }
-                  columnDefinitions={COLUMN_DEFINITIONS}
-                  items={items}
-                  selectionType="single"
-                  variant="full-page"
-                  stickyHeader={true}
-                  loading={loading} // Indicador de carga conectado
-                  loadingText="Cargando usuarios..."
-                  header={
-                    <Header
-                      counter={!loading ? `(${items.length})` : ''}
-                      actions={
-                        <SpaceBetween direction="horizontal" size="xs">
-                          <Button disabled={selectedItems.length === 0}>
-                            Editar
-                          </Button>
-                          <Button variant="primary">Nuevo Usuario</Button>
-                        </SpaceBetween>
-                      }
-                    >
-                      Gestión de Usuarios
-                    </Header>
-                  }
-                  filter={
-                    <TextFilter
-                      {...filterProps}
-                      filteringPlaceholder="Buscar por nombre, correo..."
-                      countText={`${filteredItemsCount} coincidencias`}
-                    />
-                  }
-                  pagination={<Pagination {...paginationProps} />}
-                />
-              </SpaceBetween>
-            </Box>
-          }
-          splitPanel={getSplitPanelContent(selectedItems[0])}
-          splitPanelOpen={isSplitPanelOpen}
-          onSplitPanelToggle={({ detail }) => setIsSplitPanelOpen(detail.open)}
-          splitPanelPreferences={splitPanelPreferences}
-          onSplitPanelPreferencesChange={({ detail }) =>
-            setSplitPanelPreferences(detail)
-          }
+        <SecondaryHeader
+          breadcrumbs={[
+            { text: 'Sistema', href: '#' },
+            { text: 'Usuarios', href: '/users' },
+          ]}
+          isMenuOpen={navigationOpen}
+          onMenuClick={() => setNavigationOpen(!navigationOpen)}
+          isInfoOpen={toolsOpen}
+          onInfoClick={() => setToolsOpen(!toolsOpen)}
         />
       </div>
+
+      <AppLayout
+        headerSelector="#sticky-nav-container"
+        navigation={<GlobalSidebar />}
+        navigationOpen={navigationOpen}
+        onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
+        toolsOpen={toolsOpen}
+        onToolsChange={({ detail }) => setToolsOpen(detail.open)}
+        contentType="table"
+        stickyHeader={true}
+        // --- CONEXIÓN DE ALERTAS GLOBALES ---
+        notifications={
+          alerts && alerts.length > 0 ? (
+            <Flashbar items={alerts as any} stackItems={true} />
+          ) : null
+        }
+        // --- SPLIT PANEL ---
+        splitPanel={getSplitPanelContent(selectedItems[0])}
+        splitPanelOpen={splitPanelOpen}
+        onSplitPanelToggle={({ detail }) => setSplitPanelOpen(detail.open)}
+        splitPanelSize={splitPanelSize}
+        onSplitPanelResize={({ detail }) => setSplitPanelSize(detail.size)}
+        splitPanelPreferences={preferences.splitPanelPreferences}
+        onSplitPanelPreferencesChange={({ detail }) => {
+          setPreferences({ ...preferences, splitPanelPreferences: detail });
+        }}
+        content={
+          <Table
+            {...collectionProps}
+            selectedItems={selectedItems}
+            onSelectionChange={({ detail }) =>
+              setSelectedItems(detail.selectedItems as UserItem[])
+            }
+            columnDefinitions={COLUMN_DEFINITIONS}
+            items={items}
+            selectionType="single"
+            variant="full-page"
+            stickyHeader={true}
+            stickyHeaderVerticalOffset={90}
+            loading={loading}
+            loadingText="Cargando usuarios..."
+            header={
+              <Header
+                variant="awsui-h1-sticky"
+                counter={!loading ? `(${items.length})` : ''}
+                actions={
+                  <SpaceBetween direction="horizontal" size="xs">
+                    <Button
+                      iconName="refresh"
+                      loading={refreshing}
+                      onClick={() => fetchUsers(true)} // Dispara la alerta de refresh
+                      ariaLabel="Refrescar"
+                    />
+                    <Button disabled={selectedItems.length === 0}>
+                      Editar
+                    </Button>
+                    <Button variant="primary">Crear usuario</Button>
+                  </SpaceBetween>
+                }
+              >
+                Usuarios
+              </Header>
+            }
+            preferences={
+              <CollectionPreferences
+                title="Preferencias"
+                confirmLabel="Confirmar"
+                cancelLabel="Cancelar"
+                preferences={preferences}
+                onConfirm={({ detail }) => setPreferences(detail)}
+                pageSizePreference={{
+                  title: 'Tamaño de página',
+                  options: [
+                    { value: 50, label: '50 recursos' },
+                    { value: 100, label: '100 recursos' },
+                    { value: 200, label: '200 recursos' },
+                  ],
+                }}
+                splitPanelPreferences={{
+                  title: 'Posición del panel de detalles',
+                  options: [
+                    { label: 'Abajo', value: 'bottom' },
+                    { label: 'Lado', value: 'side' },
+                  ],
+                }}
+                visibleContentPreference={{
+                  title: 'Seleccionar columnas visibles',
+                  options: [
+                    {
+                      label: 'Propiedades principales',
+                      options: COLUMN_DEFINITIONS.map((col) => ({
+                        id: col.id,
+                        label: col.header as string,
+                      })),
+                    },
+                  ],
+                }}
+              />
+            }
+            filter={
+              <TextFilter
+                {...filterProps}
+                filteringPlaceholder="Buscar usuarios..."
+                countText={`${filteredItemsCount} coincidencias`}
+              />
+            }
+            pagination={<Pagination {...paginationProps} />}
+          />
+        }
+      />
+      <Footer />
     </div>
   );
 }

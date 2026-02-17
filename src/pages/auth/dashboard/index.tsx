@@ -18,7 +18,6 @@ import {
   Button,
   Box,
   Flashbar,
-  type FlashbarProps,
   Spinner,
 } from '@cloudscape-design/components';
 
@@ -28,13 +27,13 @@ import type { WidgetDataType } from './interfaces';
 import { DashboardPalette } from './palette';
 import { boardI18nStrings } from './board-i18n';
 
-// --- CONTEXTO (Para controlar carga global) ---
+// --- CONTEXTO ---
 import { AppContent } from '@/context/AppContext';
 
 // --- TUS COMPONENTES ---
-import Navbar from '../../layouts/navbar/Navbar';
-import GlobalSidebar from '../../layouts/sidebar/Sidebar';
-import { Footer } from '@/pages/layouts/Footer';
+import Navbar from '@/components/layouts/AppHeader';
+import GlobalSidebar from '@/components/layouts/AppSidebar';
+import { Footer } from '@/components/layouts/AppFooter';
 
 function useWindowWidth() {
   const [width, setWidth] = useState(window.innerWidth);
@@ -57,8 +56,7 @@ export default function DashboardFeature() {
   const windowWidth = useWindowWidth();
 
   // --- CONTEXTO GLOBAL ---
-  // Traemos setPageLoading para apagar cualquier loader global que venga del login
-  const { setPageLoading } = useContext(AppContent) || {};
+  const { setPageLoading, alerts, addAlert } = useContext(AppContent) || {};
 
   // --- ESTADOS DE CARGA LOCAL ---
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -68,15 +66,11 @@ export default function DashboardFeature() {
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(false);
 
-  // Notificaciones
-  const [flashbarItems, setFlashbarItems] = useState<
-    FlashbarProps.MessageDefinition[]
-  >([]);
-
-  // Referencia para evitar actualizaciones en componente desmontado
+  // Referencias para evitar ciclos infinitos y actualizaciones desmontadas
   const isMounted = useRef(true);
+  const hasLoaded = useRef(false); // <-- CANDADO DE SEGURIDAD
 
-  // --- CARGA DE ITEMS (Con manejo de errores) ---
+  // --- CARGA DE ITEMS ---
   const [items, setItems] = useState<BoardProps.Item<WidgetDataType>[]>(() => {
     const savedLayout = localStorage.getItem('inventory-dashboard-v6-large');
     if (savedLayout) {
@@ -106,54 +100,40 @@ export default function DashboardFeature() {
     return getBoardWidgets(getDefaultLayout(window.innerWidth));
   });
 
-  // --- SECUENCIA DE CARGA ROBUSTA ---
+  // --- SECUENCIA DE CARGA ROBUSTA (PROTEGIDA CONTRA LOOPS) ---
   useEffect(() => {
     isMounted.current = true;
 
-    // 1. APAGADO DE SEGURIDAD GLOBAL
-    // Si vienes del Login y se quedó la barra cargando, esto la fuerza a quitarse.
+    // Si ya cargó antes, abortamos para no repetir las notificaciones
+    if (hasLoaded.current) return;
+
     if (setPageLoading) {
       setPageLoading(false);
     }
 
     const loadDashboard = async () => {
-      // Simulamos la carga inicial de estructura (0.8s)
       await new Promise((resolve) => setTimeout(resolve, 800));
 
       if (isMounted.current) {
-        setIsPageLoading(false); // Aparecen los recuadros
+        setIsPageLoading(false);
       }
 
-      // Simulamos la carga de datos de widgets (1.2s más)
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      if (isMounted.current) {
-        setIsWidgetLoading(false); // Aparecen las gráficas
+      if (isMounted.current && !hasLoaded.current) {
+        setIsWidgetLoading(false);
 
-        // Agregar notificaciones
-        setFlashbarItems((prev) => [
-          ...prev,
-          {
-            type: 'success',
-            dismissible: true,
-            content: 'Inventario sincronizado correctamente.',
-            id: 'sync_msg_' + Date.now(),
-            onDismiss: () =>
-              setFlashbarItems((current) =>
-                current.filter((i) => !i.id?.startsWith('sync_msg_')),
-              ),
-          },
-          {
-            type: 'info',
-            dismissible: true,
-            content: 'Bienvenido al Panel de Control.',
-            id: 'welcome_msg',
-            onDismiss: () =>
-              setFlashbarItems((current) =>
-                current.filter((i) => i.id !== 'welcome_msg'),
-              ),
-          },
-        ]);
+        // Disparamos notificaciones SOLO UNA VEZ
+        if (addAlert) {
+          addAlert(
+            'success',
+            'Inventario sincronizado correctamente.',
+            'Sincronización',
+          );
+          addAlert('info', 'Bienvenido al Panel de Control.', 'Bienvenido');
+        }
+
+        hasLoaded.current = true; // Cerramos el candado
       }
     };
 
@@ -162,7 +142,7 @@ export default function DashboardFeature() {
     return () => {
       isMounted.current = false;
     };
-  }, [setPageLoading]); // Dependencia importante
+  }, []); // <-- ARREGLO VACÍO: Solo se ejecuta al montar el componente
 
   const handleItemsChange = useCallback(
     (event: CustomEvent<BoardProps.ItemsChangeDetail<WidgetDataType>>) => {
@@ -171,7 +151,6 @@ export default function DashboardFeature() {
     [],
   );
 
-  // Guardado automático
   useEffect(() => {
     if (!isWidgetLoading && !isPageLoading) {
       const timeout = setTimeout(() => {
@@ -212,34 +191,26 @@ export default function DashboardFeature() {
   const handleReset = useCallback(() => {
     setIsPageLoading(true);
     setIsWidgetLoading(true);
-    setFlashbarItems([]);
 
     setItems(getBoardWidgets(getDefaultLayout(windowWidth)));
     localStorage.removeItem('inventory-dashboard-v6-large');
 
-    // Secuencia de reset
     setTimeout(() => {
       if (isMounted.current) setIsPageLoading(false);
       setTimeout(() => {
         if (isMounted.current) {
           setIsWidgetLoading(false);
-          setFlashbarItems((prev) => [
-            ...prev,
-            {
-              type: 'success',
-              dismissible: true,
-              content: 'Diseño restablecido por defecto.',
-              id: 'reset_' + Date.now(),
-              onDismiss: (event) =>
-                setFlashbarItems((current) =>
-                  current.filter((i) => !i.id?.startsWith('reset_')),
-                ),
-            },
-          ]);
+          if (addAlert) {
+            addAlert(
+              'success',
+              'Diseño restablecido por defecto.',
+              'Vista Actualizada',
+            );
+          }
         }
       }, 1000);
     }, 800);
-  }, [windowWidth]);
+  }, [windowWidth, addAlert]);
 
   const renderItem = useCallback(
     (item: BoardProps.Item<WidgetDataType>, actions: any) => {
@@ -298,20 +269,9 @@ export default function DashboardFeature() {
           />
         }
         notifications={
-          <Flashbar
-            items={flashbarItems}
-            stackItems={true}
-            i18nStrings={{
-              ariaLabel: 'Notificaciones',
-              notificationBarAriaLabel: 'Ver todas',
-              notificationBarText: 'Notificaciones',
-              errorIconAriaLabel: 'Error',
-              warningIconAriaLabel: 'Advertencia',
-              successIconAriaLabel: 'Éxito',
-              infoIconAriaLabel: 'Información',
-              inProgressIconAriaLabel: 'En progreso',
-            }}
-          />
+          alerts && alerts.length > 0 ? (
+            <Flashbar items={alerts as any} stackItems={true} />
+          ) : null
         }
         breadcrumbs={null}
         content={
@@ -344,8 +304,6 @@ export default function DashboardFeature() {
             }
           >
             {isPageLoading ? (
-              // --- LOADING STATE ---
-              // Se centra verticalmente y muestra el Spinner grande
               <Box
                 padding="xxl"
                 display="flex"
@@ -356,7 +314,6 @@ export default function DashboardFeature() {
                 <Spinner size="large" />
               </Box>
             ) : (
-              // --- CONTENT STATE ---
               <SpaceBetween size="xxl">
                 <div
                   style={{

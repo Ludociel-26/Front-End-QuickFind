@@ -86,7 +86,7 @@ const EmailVerify = () => {
       if (data.success) {
         toast.success(data.message);
         getUserData();
-        navigate('/');
+        navigate('/dashboard');
       } else {
         toast.error(data.message);
       }

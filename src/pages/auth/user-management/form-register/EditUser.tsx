@@ -23,9 +23,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 // Contexto y Layouts
 import { AppContent } from '@/context/AppContext';
-import Navbar from '../../../layouts/navbar/Navbar';
-import GlobalSidebar from '../../../layouts/sidebar/Sidebar';
-import RouteTracker from '../../../layouts/RouteTracker';
+import Navbar from '@/components/layouts/AppHeader';
+import GlobalSidebar from '@/components/layouts/AppSidebar';
+import RouteTracker from '../../../../components/layouts/RouteTracker';
 
 // --- CONFIGURACIÓN ---
 const ROLE_OPTIONS = [

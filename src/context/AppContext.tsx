@@ -1,24 +1,36 @@
 import axios from 'axios';
-import { createContext, useState, ReactNode, useEffect } from 'react';
+import {
+  createContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from 'react';
 import { applyMode, Mode } from '@cloudscape-design/global-styles';
 
 // --- IMPORTANTE: ESTO DEBE ESTAR EXPORTADO ---
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-// Interfaz que coincide con la respuesta de tu backend (userController.js)
 export interface UserData {
   id: number | string;
   name: string;
   email: string;
   isAccountVerified: boolean;
-
-  // IDs internos
   role: number;
   area: number;
-
-  // Nombres para mostrar (Navbar)
   roleName: string;
   areaName: string;
+}
+
+// Interfaz manual para evitar dependencias conflictivas de tipos en Vite
+export interface AlertItem {
+  type: 'success' | 'warning' | 'info' | 'error';
+  content: React.ReactNode;
+  header?: React.ReactNode;
+  id?: string;
+  loading?: boolean;
+  dismissible?: boolean;
+  onDismiss?: () => void;
 }
 
 interface AppContextType {
@@ -41,6 +53,16 @@ interface AppContextType {
   setPageLoading: (loading: boolean) => void;
   loadingText: string;
   setLoadingText: (text: string) => void;
+
+  // NUEVO: ESTADO GLOBAL DE NOTIFICACIONES (Renderizado Local)
+  alerts: AlertItem[];
+  addAlert: (
+    type: AlertItem['type'],
+    content: string,
+    header?: string,
+    existingId?: string,
+    loading?: boolean,
+  ) => string;
 }
 
 export const AppContent = createContext<AppContextType | null>(null);
@@ -56,6 +78,54 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // Estados visuales
   const [pageLoading, setPageLoading] = useState<boolean>(false);
   const [loadingText, setLoadingText] = useState<string>('Cargando...');
+
+  // --- SISTEMA GLOBAL DE ALERTAS ---
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+
+  // Envolvemos con useCallback para mantener la misma referencia en memoria y evitar infinite loops
+  const addAlert = useCallback(
+    (
+      type: AlertItem['type'],
+      content: string,
+      header?: string,
+      existingId?: string,
+      loading: boolean = false,
+    ): string => {
+      const id =
+        existingId ||
+        Date.now().toString() + Math.random().toString(36).substring(7);
+
+      setAlerts((prev) => {
+        const existingIndex = prev.findIndex((a) => a.id === id);
+        const newAlert: AlertItem = {
+          type,
+          content,
+          header,
+          id,
+          loading,
+          dismissible: !loading,
+          onDismiss: () =>
+            setAlerts((current) => current.filter((a) => a.id !== id)),
+        };
+
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = newAlert;
+          return updated;
+        }
+        return [...prev, newAlert];
+      });
+
+      if (!loading && (type === 'success' || type === 'info')) {
+        setTimeout(() => {
+          setAlerts((current) => current.filter((a) => a.id !== id));
+        }, 5000);
+      }
+
+      return id;
+    },
+    [], // <-- El arreglo vacío asegura que la función jamás se recree
+  );
 
   // --- TEMA ---
   const [theme, setTheme] = useState<ThemeMode>(
@@ -106,32 +176,40 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   // --- AUTH ---
   const getUserData = async () => {
     try {
-      // ✅ CORRECCIÓN CRÍTICA: Ruta en singular '/api/user/data'
-      // Coincide con app.use('/api/user', userRouter) en server.js
       const { data } = await axios.get(`${backendUrl}/api/user/data`);
 
       if (data.success) {
         setUserData(data.userData);
         setIsLoggedin(true);
       } else {
-        // Si el backend responde success: false explícitamente
         setUserData(null);
-        // Opcional: setIsLoggedin(false) solo si es error crítico
+        addAlert(
+          'warning',
+          'No se pudieron recuperar los datos de tu perfil.',
+          'Error de sincronización',
+        );
       }
     } catch (error: any) {
       console.error('Error obteniendo datos del usuario:', error);
 
-      // ✅ PROTECCIÓN CONTRA LOOP INFINITO:
-      // Solo cerramos sesión si el error es de autenticación (401 No autorizado / 403 Prohibido)
       if (
         error.response &&
         (error.response.status === 401 || error.response.status === 403)
       ) {
         setUserData(null);
         setIsLoggedin(false);
+        addAlert(
+          'info',
+          'Tu sesión ha expirado por inactividad o razones de seguridad.',
+          'Sesión terminada',
+        );
+      } else if (error.message !== 'canceled') {
+        addAlert(
+          'error',
+          'Se perdió la conexión con el servidor de base de datos.',
+          'Error de Red #500',
+        );
       }
-      // Si es 404 (Ruta mal) o 500 (Server error), NO deslogueamos para evitar parpadeo/loop,
-      // pero el usuario verá que no cargaron sus datos.
     }
   };
 
@@ -140,7 +218,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await axios.get(`${backendUrl}/api/auth/is-auth`);
       if (data.success) {
         setIsLoggedin(true);
-        // Ya autenticados, pedimos los datos
         await getUserData();
       } else {
         setIsLoggedin(false);
@@ -149,6 +226,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     } catch (error: any) {
       setIsLoggedin(false);
       setUserData(null);
+      if (error.response && error.response.status >= 500) {
+        addAlert(
+          'error',
+          'El servicio no está disponible en este momento.',
+          'Servicio Caído',
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -174,7 +258,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     setPageLoading,
     loadingText,
     setLoadingText,
+    alerts, // <-- Exportamos la data
+    addAlert, // <-- Exportamos la función protegida por useCallback
   };
 
-  return <AppContent.Provider value={value}>{children}</AppContent.Provider>;
+  return (
+    <AppContent.Provider value={value}>
+      {/* ELIMINAMOS el <Flashbar /> global de aquí.
+        Ahora cada componente (Login.tsx, Dashboard.tsx) decidirá dónde renderizar 'alerts' 
+      */}
+      {children}
+    </AppContent.Provider>
+  );
 };

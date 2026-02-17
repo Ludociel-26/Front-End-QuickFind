@@ -14,9 +14,11 @@ import ProtectedRoute from './ProtectedRoute';
 // --- LAZY LOADING ---
 const Dashboard = React.lazy(() => import('@/pages/auth/dashboard/index'));
 const Inventory = React.lazy(
-  () => import('@/pages/auth/table-inventory-items/index'),
+  () => import('@/pages/auth/almacén/table-inventory-items/index'),
 );
-const FolderView = React.lazy(() => import('@/pages/auth/folder-view/index'));
+const FolderView = React.lazy(
+  () => import('@/pages/auth/almacén/folder-view/index'),
+);
 const ProductDetailPage = React.lazy(
   () => import('@/pages/auth/product-detail-page/index'),
 );
@@ -30,6 +32,75 @@ const UserEdit = React.lazy(
 const CleaningPlanPage = React.lazy(
   () => import('@/pages/public/cleaning-plan-page/index'),
 );
+
+const Almacén = React.lazy(
+  () => import('@/pages/auth/almacén/product-detail-inventory/index'),
+);
+
+const Maintenance = React.lazy(
+  () => import('@/pages/auth/mantenimiento/product-detail-inventory/index'),
+);
+
+const Checklists = React.lazy(
+  () => import('@/pages/auth/mantenimiento/checklists-pre-operativos/index'),
+);
+
+const PerformInspection = React.lazy(
+  () => import('@/pages/auth/mantenimiento/perform-inspection/index'),
+);
+
+const BitacoraVapor = React.lazy(
+  () => import('@/pages/auth/mantenimiento/bitacora-central-vapor/index'),
+);
+
+const VaporLogsTable = React.lazy(
+  () => import('@/pages/auth/mantenimiento/vapor-logs-table/index'),
+);
+
+const AirCompressorEntry = React.lazy(
+  () => import('@/pages/auth/mantenimiento/air-compressor-entry/index'),
+);
+
+const AirLogsTable = React.lazy(
+  () => import('@/pages/auth/mantenimiento/air-logs-table/index'),
+);
+
+const ChemicalAnalysisEntry = React.lazy(
+  () => import('@/pages/auth/mantenimiento/chemical-analysis-entry/index'),
+);
+
+const ChemicalAnalysis = React.lazy(
+  () => import('@/pages/auth/mantenimiento/chemical-analysis-logs-table'),
+);
+
+const DailyReportsFrozenMachinery = React.lazy(
+  () =>
+    import('@/pages/auth/mantenimiento/daily-reports-frozen-machinery/index'),
+);
+
+const DailyReportsRefrigeratedMachinery = React.lazy(
+  () =>
+    import('@/pages/auth/mantenimiento/daily-reports-refrigerated-machinery/index'),
+);
+
+const DailyReportsRefrigerationRefrigerated = React.lazy(
+  () =>
+    import('@/pages/auth/mantenimiento/daily-reports-refrigeration-refrigerated'),
+);
+
+const CuartoFrio5TelemetryEntry = React.lazy(
+  () => import('@/pages/auth/mantenimiento/cuarto-frio5-telemetry-entry/index'),
+);
+
+const TelemetryEntry = React.lazy(
+  () => import('@/pages/auth/mantenimiento/telemetry-entry/index'),
+);
+
+const AdministrationCenter = React.lazy(
+  () => import('@/pages/auth/user-management/product-detail-user/index'),
+);
+
+const Services = React.lazy(() => import('@/pages/auth/services/index'));
 
 // Imports estáticos
 import Login from '@/pages/auth/SignIn';
@@ -93,6 +164,159 @@ const AppRouter = () => {
           <Route path="/cleaning-plan-page" element={<CleaningPlanPage />} />
           <Route path="/home" element={<Home />} />
 
+          {/* Destalles Serivcios */}
+          <Route
+            path="/services"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <Services />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/almacen"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <Almacén />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <Maintenance />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/checklists-pre-operativos"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <Checklists />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/perform-inspection"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <PerformInspection />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/vapor-logs-table"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <VaporLogsTable />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/bitacora-central-vapor"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <BitacoraVapor />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/telemetry-entry"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <TelemetryEntry />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/air-logs-table"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <AirLogsTable />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/air-compressor-entry"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <AirCompressorEntry />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/chemical-analysis-logs-table"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <ChemicalAnalysis />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/chemical-analysis-entry"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <ChemicalAnalysisEntry />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/daily-reports-frozen-machinery"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <DailyReportsFrozenMachinery />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/daily-reports-refrigerated-machinery"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <DailyReportsRefrigeratedMachinery />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/daily-reports-refrigeration-refrigerated"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <DailyReportsRefrigerationRefrigerated />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/maintenance/cuarto-frio5-telemetry-entry"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <CuartoFrio5TelemetryEntry />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/administration"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <AdministrationCenter />
+              </ProtectedRoute>
+            }
+          />
+
           {/* RUTAS PROTEGIDAS */}
           <Route
             path="/dashboard"
@@ -127,7 +351,7 @@ const AppRouter = () => {
             }
           />
           <Route
-            path="/user"
+            path="/admin/user"
             element={
               <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
                 <User />
@@ -135,7 +359,7 @@ const AppRouter = () => {
             }
           />
           <Route
-            path="/user-reg"
+            path="/admin/user-reg"
             element={
               <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
                 <UserReg />
@@ -143,7 +367,7 @@ const AppRouter = () => {
             }
           />
           <Route
-            path="/user-edit/:userId"
+            path="/admin/user-edit/:userId"
             element={
               <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
                 <UserEdit />
