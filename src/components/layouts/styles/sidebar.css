@@ -35,3 +35,77 @@ a[class*='awsui_link-active'] {
   display: flex;
   flex-direction: column;
 }
+
+/* =========================================================
+   4. TÍTULOS PRINCIPALES MÁS GRANDES (NIVEL 1)
+   ========================================================= */
+
+/* A. Primero: Hacemos GRANDES a los títulos de TODOS los grupos expandibles */
+.global-sidebar-container
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  a[class*='awsui_link'] {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.3px !important;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  color: var(--color-text-heading-default, #16191f) !important;
+}
+
+/* Color grande para Modo Oscuro */
+.awsui-dark-mode
+  .global-sidebar-container
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  a[class*='awsui_link'] {
+  color: var(--color-text-heading-default, #ffffff) !important;
+}
+
+/* Agrandamos un poquito el ícono de la flecha de los principales */
+.global-sidebar-container
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  button {
+  transform: scale(1.1);
+  margin-right: 4px;
+}
+
+/* B. Segundo: ACHICAMOS los que están en un SUB-NIVEL (Nivel 2 en adelante)
+   Al usar "ul ul", apuntamos solo a los que están anidados dentro de otro menú.
+   Esto devuelve a "Proveedores", "Inventario General", etc., a su estado normal. */
+.global-sidebar-container
+  ul[class*='awsui_list']
+  ul[class*='awsui_list']
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  a[class*='awsui_link'] {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  letter-spacing: normal !important;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  color: var(--color-text-body-default, #16191f) !important;
+}
+
+/* Color normal de sub-nivel para Modo Oscuro */
+.awsui-dark-mode
+  .global-sidebar-container
+  ul[class*='awsui_list']
+  ul[class*='awsui_list']
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  a[class*='awsui_link'] {
+  color: var(--color-text-body-default, #d1d5db) !important;
+}
+
+/* Regresamos la flecha del sub-nivel a su tamaño normal */
+.global-sidebar-container
+  ul[class*='awsui_list']
+  ul[class*='awsui_list']
+  [class*='awsui_expandable-link-group']
+  > [class*='awsui_header']
+  button {
+  transform: scale(1);
+  margin-right: 0px;
+}

@@ -172,13 +172,14 @@ const VAPOR_SCHEMA = {
     },
     { id: 'rev_seguridad', label: 'Revisar Dispositivos de Seguridad' },
     { id: 'rev_bomba_agua', label: 'Revisar Bomba de Alim. de Agua' },
-    { id: 'colum_n_agu', label: 'COLUM. N. AGU. (Columna de Agua)' }, // Etiqueta exacta
+    { id: 'colum_n_agu', label: 'COLUM. N. AGU. (Columna de Agua)' },
     { id: 'purga_fondo', label: 'PURGA FONDO (Purga de Fondo)' },
   ],
 };
 
 const generateHourOptions = () => {
-  const options = [];
+  // FIX: Tipamos el arreglo de retorno
+  const options: any[] = [];
   for (let i = 0; i < 24; i++) {
     const hourString = i.toString().padStart(2, '0') + ':00';
     options.push({ label: hourString, value: hourString });
@@ -189,12 +190,18 @@ const generateHourOptions = () => {
 export default function CentralVaporEntry() {
   const [navigationOpen, setNavigationOpen] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [hour, setHour] = React.useState({ label: '08:00', value: '08:00' });
+  // FIX: Tipado a any para evitar problemas con Cloudscape Select
+  const [hour, setHour] = React.useState<any>({
+    label: '08:00',
+    value: '08:00',
+  });
 
-  const [readings, setReadings] = React.useState({});
+  // FIX: Especificamos que es un diccionario, así TS no marcará error al usar readings[id]
+  const [readings, setReadings] = React.useState<Record<string, any>>({});
 
   React.useEffect(() => {
-    const initialReadings = {};
+    // FIX: Especificamos el tipo para initialReadings
+    const initialReadings: Record<string, any> = {};
 
     VAPOR_SCHEMA.numericGroups.forEach((group) => {
       group.fields.forEach((field) => {
@@ -213,12 +220,14 @@ export default function CentralVaporEntry() {
     setReadings(initialReadings);
   }, [hour.value]);
 
-  const handleInputChange = (id, value) => {
+  // FIX: Tipamos los parámetros id y value
+  const handleInputChange = (id: string, value: any) => {
     setReadings((prev) => ({ ...prev, [id]: value }));
   };
 
-  const getValidationError = (metric, value) => {
-    if (value === '') return null;
+  // FIX: Tipamos los parámetros metric y value
+  const getValidationError = (metric: any, value: any) => {
+    if (value === '' || value === undefined) return null;
     const numValue = parseFloat(value);
     if (isNaN(numValue)) return 'Debe ser un número.';
     if (metric.min !== undefined && numValue < metric.min)
@@ -228,8 +237,11 @@ export default function CentralVaporEntry() {
     return null;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // FIX: Tipamos e como any y validamos la prevención para que sirva en el Form y en el Button
+  const handleSubmit = (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setIsSubmitting(true);
 
     const payload = {
@@ -260,6 +272,8 @@ export default function CentralVaporEntry() {
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
+        {/* FIX: Ignoramos el chequeo estricto para evitar el error de SecondaryHeader */}
+        {/* @ts-ignore */}
         <SecondaryHeader
           breadcrumbs={[
             { text: 'Mantenimiento', href: '/' },
@@ -286,7 +300,11 @@ export default function CentralVaporEntry() {
                     <Button formAction="none" variant="link">
                       Descartar
                     </Button>
-                    <Button variant="primary" loading={isSubmitting}>
+                    <Button
+                      variant="primary"
+                      loading={isSubmitting}
+                      onClick={handleSubmit}
+                    >
                       Guardar Registro Horario
                     </Button>
                   </SpaceBetween>
@@ -304,8 +322,9 @@ export default function CentralVaporEntry() {
                     <FormField label="Hora de Corte (CST)">
                       <Select
                         selectedOption={hour}
+                        // FIX: Forzamos la opción a any para que Cloudscape la acepte
                         onChange={({ detail }) =>
-                          setHour(detail.selectedOption)
+                          setHour(detail.selectedOption as any)
                         }
                         options={generateHourOptions()}
                       />
@@ -318,7 +337,6 @@ export default function CentralVaporEntry() {
                       key={index}
                       header={<Header variant="h2">{group.title}</Header>}
                     >
-                      {/* Si es el bloque de consumos, mostramos una alerta informativa */}
                       {group.title.includes('Consumos') && (
                         <Box margin={{ bottom: 'm' }}>
                           <Alert type="info">

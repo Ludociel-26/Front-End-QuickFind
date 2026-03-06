@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { AppContent } from '@/context/AppContext';
-import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Cloudscape Imports ---
 import '@cloudscape-design/global-styles/index.css';
-import { Button } from '@cloudscape-design/components';
+import { Button, Flashbar } from '@cloudscape-design/components';
 
 // --- Icons & Assets ---
 import { Sun, Moon, Monitor, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -28,20 +27,23 @@ const EmailVerify = () => {
     throw new Error('AppContent debe estar dentro de AppContextProvider');
   }
 
-  // Extraemos datos de usuario Y datos del tema desde el contexto
+  // Extraemos datos de usuario, alertas y tema desde el contexto
   const {
     backendUrl,
     isLoggedin,
     userData,
     getUserData,
-    theme, // Antes 'mode' local
-    isDark, // Calculado globalmente
-    toggleTheme, // Función global
-  } = context;
+    theme,
+    isDark,
+    toggleTheme,
+    addAlert, // Importamos función global para alertas
+    alerts, // Importamos el estado global de alertas
+    setPageLoading,
+  } = context as any;
 
   const navigate = useNavigate();
 
-  // --- LÓGICA DE VALIDACIÓN (INTACTA) ---
+  // --- LÓGICA DE VALIDACIÓN ---
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleInput = (
@@ -73,9 +75,20 @@ const EmailVerify = () => {
   };
 
   const onSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (setPageLoading) setPageLoading(true);
+
+    // 1. Mostrar alerta tipo "info" con estado de carga
+    const alertId = addAlert(
+      'info',
+      'Verificando código de seguridad...',
+      'Procesando',
+      undefined,
+      true,
+    );
+
     try {
-      e.preventDefault();
-      const otpArray = inputRefs.current.map((e) => (e ? e.value : ''));
+      const otpArray = inputRefs.current.map((el) => (el ? el.value : ''));
       const otp = otpArray.join('');
 
       const { data } = await axios.post(
@@ -84,26 +97,45 @@ const EmailVerify = () => {
       );
 
       if (data.success) {
-        toast.success(data.message);
-        getUserData();
+        // 2. Actualizar a alerta de "success"
+        addAlert(
+          'success',
+          data.message || 'Correo verificado exitosamente.',
+          'Éxito',
+          alertId,
+          false,
+        );
+        await getUserData();
         navigate('/dashboard');
       } else {
-        toast.error(data.message);
+        // 2. Actualizar a alerta de "warning" si falla la validación
+        addAlert(
+          'warning',
+          data.message || 'El código introducido es incorrecto.',
+          'Validación Fallida',
+          alertId,
+          false,
+        );
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('Ocurrió un error inesperado');
-      }
+    } catch (error: any) {
+      // 2. Actualizar a alerta de "error" en caso de caída de servidor
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        'Ocurrió un error inesperado en el servidor';
+      addAlert('error', errorMsg, 'Error del Sistema', alertId, false);
+    } finally {
+      if (setPageLoading) setPageLoading(false);
     }
   };
 
   useEffect(() => {
-    isLoggedin && userData && userData.isAccountVerified && navigate('/');
-  }, [isLoggedin, userData]);
+    if (isLoggedin && userData && userData.isAccountVerified) {
+      navigate('/');
+    }
+  }, [isLoggedin, userData, navigate]);
 
-  // --- ESTILOS DINÁMICOS (Basados en isDark global) ---
+  // --- ESTILOS DINÁMICOS ---
   const otpInputClass = `w-12 h-14 text-center text-xl rounded-xl border outline-none transition-all duration-300 ${
     isDark
       ? 'bg-black/20 border-white/10 text-white focus:border-blue-500 focus:shadow-[0_0_15px_rgba(59,130,246,0.2)]'
@@ -150,7 +182,7 @@ const EmailVerify = () => {
             <ArrowLeft size={20} />
           </button>
 
-          {/* Botón de Tema (Conectado al Contexto Global) */}
+          {/* Botón de Tema */}
           <button
             onClick={toggleTheme}
             className={`p-2 rounded-full border backdrop-blur-md transition-all ${isDark ? 'bg-white/5 border-white/10 text-zinc-300' : 'bg-white/50 border-gray-400 text-gray-800'}`}
@@ -172,7 +204,6 @@ const EmailVerify = () => {
         </div>
 
         <div className="p-8 pt-4">
-          {/* Formulario con Lógica Original */}
           <form onSubmit={onSubmitHandler}>
             <div className="text-center mb-6">
               <div
@@ -180,7 +211,6 @@ const EmailVerify = () => {
               >
                 <ShieldCheck size={28} />
               </div>
-              {/* Textos Originales */}
               <h1
                 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
@@ -215,7 +245,6 @@ const EmailVerify = () => {
                 ))}
             </div>
 
-            {/* Botón de Cloudscape actuando como submit */}
             <Button variant="primary" fullWidth formAction="submit">
               Verify Email
             </Button>
@@ -228,6 +257,13 @@ const EmailVerify = () => {
           Secured by OmniPart Systems
         </div>
       </motion.div>
+
+      {/* RENDERIZADO DE ALERTAS DE CLOUDSCAPE (Flashbar) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[600px] px-4 pointer-events-none transition-all duration-300">
+        <div className="pointer-events-auto shadow-2xl rounded-xl overflow-hidden">
+          <Flashbar items={alerts as any} stackItems={true} />
+        </div>
+      </div>
     </div>
   );
 };

@@ -193,7 +193,6 @@ export default function InventoryTable() {
   const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
   const [splitPanelOpen, setSplitPanelOpen] = useState(false);
 
-  // FIX: Tipamos como any para evitar error del detail
   const [splitPanelPreferences, setSplitPanelPreferences] = useState<any>({
     position: 'side',
     size: 280,
@@ -203,7 +202,7 @@ export default function InventoryTable() {
     setSplitPanelOpen(selectedItems.length > 0);
   }, [selectedItems]);
 
-  // --- FILTROS (FIX: Tipados como any) ---
+  // --- FILTROS ---
   const [ubicacionFilter, setUbicacionFilter] = useState<any>({
     label: 'Todas',
     value: null,
@@ -225,7 +224,6 @@ export default function InventoryTable() {
     value: null,
   });
 
-  // FIX: Tipamos como any para evitar errores con Table Preferences
   const [preferences, setPreferences] = useState<any>({
     pageSize: 50,
     visibleContent: [
@@ -250,12 +248,12 @@ export default function InventoryTable() {
       .sort();
 
     return [
-      { label: placeholder, value: undefined }, // FIX: undefined es más amigable para TS que null
+      { label: placeholder, value: undefined },
       ...uniqueValues.map((val) => ({
         label: String(val),
         value: String(val),
       })),
-    ] as any[]; // FIX: Casteamos a any[]
+    ] as any[];
   };
 
   const ubicacionOptions = useMemo(
@@ -298,7 +296,6 @@ export default function InventoryTable() {
     selection: {},
     filtering: {
       empty: (
-        // FIX: color as any
         <Box textAlign="center" color={'inherit' as any}>
           No hay datos
         </Box>
@@ -375,7 +372,6 @@ export default function InventoryTable() {
         navigationOpen={navigationOpen}
         onNavigationChange={({ detail }) => setNavigationOpen(detail.open)}
         contentType="table"
-        // FIX: Eliminado stickyHeader={true} de aquí (AppLayout no lo admite)
         // --- SPLIT PANEL (LADO DERECHO DELGADO) ---
         splitPanelOpen={splitPanelOpen}
         onSplitPanelToggle={({ detail }) => setSplitPanelOpen(detail.open)}
@@ -383,21 +379,21 @@ export default function InventoryTable() {
         onSplitPanelPreferencesChange={({ detail }) =>
           setSplitPanelPreferences(detail as any)
         }
-        splitPanelI18nStrings={{
-          preferencesTitle: 'Preferencias',
-          preferencesPositionLabel: 'Posición',
-          preferencesPositionDescription: 'Elige posición del panel',
-          preferencesPositionSide: 'Lado',
-          preferencesPositionBottom: 'Abajo',
-          preferencesConfirm: 'OK',
-          preferencesCancel: 'Cancelar',
-          closeButtonAriaLabel: 'Cerrar',
-          openButtonAriaLabel: 'Abrir',
-          resizeHandleAriaLabel: 'Redimensionar',
-        }}
         splitPanel={
           <SplitPanel
-            // FIX: Casteado as any para que acepte un componente en el header sin quejarse
+            // FIX 1: Movimos i18nStrings del AppLayout directo al SplitPanel
+            i18nStrings={{
+              preferencesTitle: 'Preferencias',
+              preferencesPositionLabel: 'Posición',
+              preferencesPositionDescription: 'Elige posición del panel',
+              preferencesPositionSide: 'Lado',
+              preferencesPositionBottom: 'Abajo',
+              preferencesConfirm: 'OK',
+              preferencesCancel: 'Cancelar',
+              closeButtonAriaLabel: 'Cerrar',
+              openButtonAriaLabel: 'Abrir',
+              resizeHandleAriaLabel: 'Redimensionar',
+            }}
             header={
               (
                 <Header variant="h2">
@@ -546,7 +542,6 @@ export default function InventoryTable() {
               visibleColumns={preferences.visibleContent}
               header={
                 <Header
-                  // FIX: Casteamos la clase custom interna de AWS
                   variant={'awsui-h1-sticky' as any}
                   counter={`(${items.length})`}
                   actions={
@@ -586,6 +581,7 @@ export default function InventoryTable() {
                   }}
                   contentDisplayPreference={{
                     title: 'Columnas visibles',
+                    // FIX 2: Casteamos a any para evitar conflicto por agrupamiento anidado
                     options: [
                       {
                         id: 'main-columns',
@@ -595,13 +591,12 @@ export default function InventoryTable() {
                           label: c.header as string,
                         })),
                       },
-                    ],
+                    ] as any,
                   }}
                 />
               }
               filter={
                 <SpaceBetween direction="vertical" size="xs">
-                  {' '}
                   <TextFilter
                     {...filterProps}
                     filteringPlaceholder="Buscar..."

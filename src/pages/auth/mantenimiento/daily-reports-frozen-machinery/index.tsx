@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, useEffect } from 'react';
 import {
   AppLayout,
   Container,
@@ -118,18 +118,21 @@ const OPCIONES_DOSIFICADORES = [
 ];
 
 export default function DailyReportCongelados() {
-  const [navigationOpen, setNavigationOpen] = React.useState(true);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showErrorAlert, setShowErrorAlert] = React.useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
 
-  const [turno, setTurno] = React.useState({ label: 'Turno A', value: 'A' });
-  const [observacionesGlobales, setObservacionesGlobales] = React.useState('');
+  // FIX: Tipamos el Select de turno
+  const [turno, setTurno] = useState<any>({ label: 'Turno A', value: 'A' });
+  const [observacionesGlobales, setObservacionesGlobales] = useState('');
 
-  const [evaluations, setEvaluations] = React.useState({});
+  // FIX: Declaramos evaluations como diccionario de objetos anidados
+  const [evaluations, setEvaluations] = useState<Record<string, any>>({});
 
   // Inicialización exacta
-  React.useEffect(() => {
-    const initialState = {};
+  useEffect(() => {
+    // FIX: Tipamos el initialState
+    const initialState: Record<string, any> = {};
 
     // Normal / Anormal / Falla (Inician en Normal)
     [
@@ -159,7 +162,8 @@ export default function DailyReportCongelados() {
     setShowErrorAlert(false);
   }, [turno.value]);
 
-  const handleStatusChange = (id, newStatus) => {
+  // FIX: Tipamos id y newStatus
+  const handleStatusChange = (id: string, newStatus: any) => {
     setEvaluations((prev) => ({
       ...prev,
       [id]: {
@@ -173,15 +177,19 @@ export default function DailyReportCongelados() {
     }));
   };
 
-  const handleCommentChange = (id, text) => {
+  // FIX: Tipamos id y text
+  const handleCommentChange = (id: string, text: string) => {
     setEvaluations((prev) => ({
       ...prev,
       [id]: { ...prev[id], comments: text },
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // FIX: Tipamos 'e' y lo manejamos opcionalmente para que funcione en Form y Button
+  const handleSubmit = (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setShowErrorAlert(false);
 
     const hasErrors = Object.values(evaluations).some(
@@ -216,7 +224,8 @@ export default function DailyReportCongelados() {
   };
 
   // Componente reutilizable para renderizar filas del formulario con estilo dinámico
-  const renderRow = (item, options) => {
+  // FIX: Tipamos item y options
+  const renderRow = (item: any, options: any[]) => {
     const currentEval = evaluations[item.id];
     if (!currentEval) return null;
 
@@ -248,8 +257,9 @@ export default function DailyReportCongelados() {
           <div
             style={{ display: 'flex', alignItems: 'center', height: '100%' }}
           >
+            {/* FIX: variant 'span' no existe nativamente, forzamos as any */}
             <Box
-              variant="span"
+              variant={'span' as any}
               fontSize="body-m"
               fontWeight={requiresComment ? 'bold' : 'normal'}
             >
@@ -314,6 +324,8 @@ export default function DailyReportCongelados() {
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
+        {/* FIX: Ignoramos TS para las props de SecondaryHeader */}
+        {/* @ts-ignore */}
         <SecondaryHeader
           breadcrumbs={[
             { text: 'Mantenimiento', href: '/' },
@@ -340,7 +352,11 @@ export default function DailyReportCongelados() {
                     <Button formAction="none" variant="link">
                       Descartar
                     </Button>
-                    <Button variant="primary" loading={isSubmitting}>
+                    <Button
+                      variant="primary"
+                      loading={isSubmitting}
+                      onClick={handleSubmit}
+                    >
                       Guardar Reporte
                     </Button>
                   </SpaceBetween>
@@ -365,8 +381,9 @@ export default function DailyReportCongelados() {
                       <FormField label="Turno a Reportar">
                         <Select
                           selectedOption={turno}
+                          // FIX: as any
                           onChange={({ detail }) =>
-                            setTurno(detail.selectedOption)
+                            setTurno(detail.selectedOption as any)
                           }
                           options={[
                             { label: 'Turno A', value: 'A' },

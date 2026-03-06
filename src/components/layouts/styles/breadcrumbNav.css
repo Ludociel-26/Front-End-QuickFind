@@ -1,0 +1,79 @@
+/* breadcrumbNav.css - Estilos de la barra superior */
+
+/* --- TEMA CLARO (Por defecto) --- */
+.aws-breadcrumb-nav {
+  height: 44px;
+  background-color: #ffffff; /* Fondo blanco */
+  border-bottom: 1px solid #eaeded; /* Borde gris claro */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+  width: 100%;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+/* --- TEMA OSCURO --- */
+/* Esta clase la pone Cloudscape en el root, garantizando el cambio */
+.awsui-dark-mode .aws-breadcrumb-nav {
+  background-color: #0f1b2a; /* Fondo oscuro de AWS */
+  border-bottom: 1px solid #414d5c; /* Borde oscuro */
+}
+
+/* --- ALINEACIONES GENERALES --- */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+
+/* --- WRAPPER DE LOS BOTONES CIRCULARES --- */
+.nav-btn-wrapper {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.1s ease-in-out;
+}
+
+.nav-btn-wrapper button {
+  margin: 0 !important;
+}
+
+/* HOVER TEMA CLARO */
+.nav-btn-wrapper:not(.active):hover {
+  background-color: #e9ebed;
+}
+
+/* HOVER TEMA OSCURO */
+.awsui-dark-mode .nav-btn-wrapper:not(.active):hover {
+  background-color: #1d2c3f;
+}
+
+/* --- ESTADO ACTIVO (AZUL AWS PARA AMBOS TEMAS) --- */
+.nav-btn-wrapper.active {
+  background-color: #0972d3;
+}
+
+/* ÍCONO BLANCO AL ESTAR ACTIVO */
+.nav-btn-wrapper.active [class*='awsui_icon_'] {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* --- CONTENEDOR DE LA RUTA --- */
+.breadcrumb-wrapper {
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}

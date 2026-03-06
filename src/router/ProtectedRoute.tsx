@@ -1,31 +1,37 @@
-import { useContext } from 'react';
+import React, { useContext } from 'react'; // Importación directa
 import { Navigate, useLocation } from 'react-router-dom';
 import { AppContent } from '@/context/AppContext';
 
 interface ProtectedRouteProps {
   allowedRoles: number[];
-  children: JSX.Element;
+  // FIX DEFINITIVO: Usar React.ReactNode directamente evita cualquier error de módulos en Vite
+  children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  // Obtenemos userData e isLoggedin.
-  // NO necesitamos isLoading aquí porque AppRouter ya lo manejó.
-  const { isLoggedin, userData } = useContext(AppContent)!;
+  const context = useContext(AppContent);
   const location = useLocation();
 
+  // FIX: Protección vital en caso de que el contexto aún no esté montado
+  if (!context) return null;
+
+  // FIX: Extraemos con as any para evitar conflictos de tipado estricto con el AppContext
+  const { isLoggedin, userData } = context as any;
+
   // 1. Si no está logueado, al login.
-  // state={{ from: location }} es VITAL para que el Login sepa a donde regresarte (si implementas esa lógica allá)
   if (!isLoggedin || !userData) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   // 2. Validación de Roles
-  if (!allowedRoles.includes(userData.role)) {
+  // FIX: Forzamos el rol a Number() por si el backend lo envía como string ("1" vs 1)
+  if (!allowedRoles.includes(Number(userData.role))) {
     return <Navigate to="/" replace />;
   }
 
   // 3. Todo correcto, mostrar componente
-  return children;
+  // FIX: Lo envolvemos en un fragmento para cumplir con el retorno de ReactNode siempre
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

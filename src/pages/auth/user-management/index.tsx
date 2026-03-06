@@ -140,11 +140,9 @@ const ValueWithLabel = ({
 );
 
 export default function UsersTable() {
-  const { backendUrl, alerts, addAlert, setPageLoading } = useContext(
-    AppContent,
-  ) || {
-    backendUrl: 'http://localhost:4000',
-  };
+  // 🚩 CORRECCIÓN: Extraemos el contexto sin la URL quemada y leemos la URL desde el .env de Vite
+  const { alerts, addAlert, setPageLoading } = useContext(AppContent) || {};
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -200,6 +198,7 @@ export default function UsersTable() {
           else setLoading(true);
         }
 
+        // 🚩 Aquí ya utiliza el backendUrl traído desde el .env
         const response = await axios.get(`${backendUrl}/api/user/all-users`, {
           withCredentials: true,
         });
@@ -251,7 +250,7 @@ export default function UsersTable() {
         }
       }
     },
-    [backendUrl, addAlert],
+    [backendUrl, addAlert], // backendUrl ahora es una dependencia de entorno
   );
 
   // FIX: Solo ejecutar la llamada inicial si no se ha hecho ya

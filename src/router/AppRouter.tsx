@@ -32,6 +32,17 @@ const UserEdit = React.lazy(
 const CleaningPlanPage = React.lazy(
   () => import('@/pages/public/cleaning-plan-page/index'),
 );
+const Mondini2Details = React.lazy(
+  () => import('@/pages/public/cleaning-plan-page/mondini-2/Mondini2Details'),
+);
+
+const Mondini3Details = React.lazy(
+  () => import('@/pages/public/cleaning-plan-page/mondini-3/Mondini3Details'),
+);
+
+const Mondini6Details = React.lazy(
+  () => import('@/pages/public/cleaning-plan-page/mondini-6/Mondini6Details'),
+);
 
 const Almacén = React.lazy(
   () => import('@/pages/auth/almacén/product-detail-inventory/index'),
@@ -100,6 +111,20 @@ const AdministrationCenter = React.lazy(
   () => import('@/pages/auth/user-management/product-detail-user/index'),
 );
 
+const AreasTable = React.lazy(
+  () => import('@/pages/auth/user-management/area/AreasTable'),
+);
+
+const RolesTable = React.lazy(
+  () => import('@/pages/auth/user-management/roles/RolesTable'),
+);
+
+const VisualComparator = React.lazy(
+  () => import('@/pages/auth/almacén/visual-comparator/ImageComparator'),
+);
+
+const InfoSystem = React.lazy(() => import('@/pages/auth/about/index'));
+
 const Services = React.lazy(() => import('@/pages/auth/services/index'));
 
 // Imports estáticos
@@ -162,6 +187,18 @@ const AppRouter = () => {
           <Route path="/verify-email" element={<Verify />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/cleaning-plan-page" element={<CleaningPlanPage />} />
+          <Route
+            path="/cleaning-plan-mondini-2"
+            element={<Mondini2Details />}
+          />
+          <Route
+            path="/cleaning-plan-mondini-3"
+            element={<Mondini3Details />}
+          />
+          <Route
+            path="/cleaning-plan-mondini-6"
+            element={<Mondini6Details />}
+          />
           <Route path="/home" element={<Home />} />
 
           {/* Destalles Serivcios */}
@@ -371,6 +408,38 @@ const AppRouter = () => {
             element={
               <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
                 <UserEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/areastable"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <AreasTable />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/rolestable"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <RolesTable />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory/visual-comparator"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <VisualComparator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/info"
+            element={
+              <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+                <InfoSystem />
               </ProtectedRoute>
             }
           />

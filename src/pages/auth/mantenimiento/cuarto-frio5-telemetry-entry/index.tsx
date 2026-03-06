@@ -144,7 +144,8 @@ const SCHEMA = {
 
 // Generador de 24 horas (De 7:00 a 06:00 según el formato)
 const generateHourOptions = () => {
-  const options = [];
+  // FIX: Tipamos el arreglo de opciones como any[]
+  const options: any[] = [];
   for (let i = 0; i < 24; i++) {
     const hourString = i.toString().padStart(2, '0') + ':00';
     options.push({ label: hourString, value: hourString });
@@ -156,16 +157,24 @@ export default function CuartoFrio5TelemetryEntry() {
   const [navigationOpen, setNavigationOpen] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // CORRECCIÓN 1: Aquí estaba el error de "setTurno before initialization"
-  const [turno, setTurno] = React.useState({ label: 'Turno A', value: 'A' });
-  const [hour, setHour] = React.useState({ label: '07:00', value: '07:00' });
+  // FIX: Tipamos estados a any para los componentes Select de Cloudscape
+  const [turno, setTurno] = React.useState<any>({
+    label: 'Turno A',
+    value: 'A',
+  });
+  const [hour, setHour] = React.useState<any>({
+    label: '07:00',
+    value: '07:00',
+  });
   const [observaciones, setObservaciones] = React.useState('');
 
-  const [readings, setReadings] = React.useState({});
+  // FIX: Aseguramos que TS reconozca "readings" como un diccionario dinámico
+  const [readings, setReadings] = React.useState<Record<string, any>>({});
 
   // Inicialización de campos
   React.useEffect(() => {
-    const initialReadings = {};
+    // FIX: Tipamos initialReadings
+    const initialReadings: Record<string, any> = {};
 
     // Nivel de Aceite tiene su propio control (OK / X)
     initialReadings['nivel_aceite'] = 'OK';
@@ -179,12 +188,14 @@ export default function CuartoFrio5TelemetryEntry() {
     setObservaciones('');
   }, [hour.value, turno.value]);
 
-  const handleInputChange = (id, value) => {
+  // FIX: Tipamos id y value
+  const handleInputChange = (id: string, value: any) => {
     setReadings((prev) => ({ ...prev, [id]: value }));
   };
 
   // CORRECCIÓN 2: Validador protegido contra valores 'undefined'
-  const getValidationError = (metric, value) => {
+  // FIX: Tipamos metric y value
+  const getValidationError = (metric: any, value: any) => {
     // Escudo: Si es undefined, nulo, o cadena vacía, no validamos nada aún
     if (value === undefined || value === null || value === '') return null;
 
@@ -206,8 +217,11 @@ export default function CuartoFrio5TelemetryEntry() {
     return null;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // FIX: Tipamos el evento de forma opcional y llamamos preventDefault condicionalmente
+  const handleSubmit = (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setIsSubmitting(true);
 
     const payload = {
@@ -250,6 +264,8 @@ export default function CuartoFrio5TelemetryEntry() {
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
+        {/* FIX: Ignoramos TS para evitar problemas con la propiedad isMenuOpen */}
+        {/* @ts-ignore */}
         <SecondaryHeader
           breadcrumbs={[
             { text: 'Mantenimiento', href: '/' },
@@ -276,7 +292,11 @@ export default function CuartoFrio5TelemetryEntry() {
                     <Button formAction="none" variant="link">
                       Descartar
                     </Button>
-                    <Button variant="primary" loading={isSubmitting}>
+                    <Button
+                      variant="primary"
+                      loading={isSubmitting}
+                      onClick={handleSubmit}
+                    >
                       Guardar Registro Horario
                     </Button>
                   </SpaceBetween>
@@ -298,8 +318,9 @@ export default function CuartoFrio5TelemetryEntry() {
                       <FormField label="Turno de Operación">
                         <Select
                           selectedOption={turno}
+                          // FIX: Forzamos la opción como any para que la acepte
                           onChange={({ detail }) =>
-                            setTurno(detail.selectedOption)
+                            setTurno(detail.selectedOption as any)
                           }
                           options={[
                             { label: 'Turno A', value: 'A' },
@@ -311,8 +332,9 @@ export default function CuartoFrio5TelemetryEntry() {
                       <FormField label="Hora (Intervalos de 1 Hr)">
                         <Select
                           selectedOption={hour}
+                          // FIX: Forzamos la opción como any
                           onChange={({ detail }) =>
-                            setHour(detail.selectedOption)
+                            setHour(detail.selectedOption as any)
                           }
                           options={generateHourOptions()}
                         />

@@ -1,14 +1,14 @@
-import React, { useContext, useState, useRef, useEffect } from 'react';
+import { useContext, useState, useRef, useEffect } from 'react';
+import type React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppContent } from '@/context/AppContext'; // <--- CONTEXTO GLOBAL
+import { AppContent } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import axios from 'axios';
-import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Cloudscape Imports ---
 import '@cloudscape-design/global-styles/index.css';
-import { Button } from '@cloudscape-design/components';
+import { Button, Flashbar } from '@cloudscape-design/components';
 
 // --- Icons & Assets ---
 import {
@@ -26,7 +26,7 @@ import logo from '@/assets/icons/appiconf.png';
 import backgroundImage from '@/assets/login/loginBg.png';
 
 // ------------------------------------------------------------------
-// 1. INPUT ANIMADO (UI Component)
+// 1. INPUT ANIMADO (UI Component Original Intacto)
 // ------------------------------------------------------------------
 const AnimatedInput = ({
   type,
@@ -53,7 +53,8 @@ const AnimatedInput = ({
     setDisplayedText('');
     const typeChar = () => {
       if (placeholder && index < placeholder.length) {
-        setDisplayedText((prev) => placeholder.slice(0, index + 1));
+        // FIX: Quitamos (prev) => porque no se utilizaba y causaba error en el linter
+        setDisplayedText(placeholder.slice(0, index + 1));
         index++;
         setTimeout(typeChar, 30 + Math.random() * 50);
       }
@@ -126,8 +127,9 @@ function ResetPassword() {
     throw new Error('AppContent debe estar dentro de un AppContextProvider');
   }
 
-  // Aquí extraemos todo del contexto global, eliminando la lógica local
-  const { backendUrl, theme, isDark, toggleTheme } = appContext;
+  // FIX: Extraemos variables globales y funciones de alertas de Cloudscape
+  const { backendUrl, theme, isDark, toggleTheme, addAlert, alerts } =
+    appContext as any;
 
   axios.defaults.withCredentials = true;
   const navigate = useNavigate();
@@ -171,23 +173,44 @@ function ResetPassword() {
     });
   };
 
-  // --- MANEJADORES DE FORMULARIO (Intactos) ---
+  // --- MANEJADORES DE FORMULARIO (Sustitución de Toast por addAlert) ---
   const onSubmitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    const alertId = addAlert(
+      'info',
+      'Enviando código de recuperación...',
+      'Procesando',
+      undefined,
+      true,
+    );
+
     try {
       const { data } = await axios.post(
         `${backendUrl}/api/auth/send-reset-otp`,
         { email },
       );
       if (data.success) {
-        toast.success(data.message);
+        addAlert(
+          'success',
+          data.message || 'Código enviado a tu correo.',
+          'Éxito',
+          alertId,
+          false,
+        );
         setIsEmailSent(true);
       } else {
-        toast.error(data.message);
+        addAlert('error', data.message, 'Verifica tu correo', alertId, false);
       }
-    } catch (error) {
-      toast.error((error as Error).message);
+    } catch (error: any) {
+      addAlert(
+        'error',
+        error.message || 'Error al enviar el correo',
+        'Error de Conexión',
+        alertId,
+        false,
+      );
     } finally {
       setLoading(false);
     }
@@ -200,7 +223,11 @@ function ResetPassword() {
     setOtp(combinedOtp);
 
     if (combinedOtp.length < 6) {
-      toast.warning(t('otpError'));
+      addAlert(
+        'warning',
+        t('otpError') || 'Por favor ingresa los 6 dígitos',
+        'Atención',
+      );
       return;
     }
     setIsOtpSubmited(true);
@@ -209,6 +236,14 @@ function ResetPassword() {
   const onSubmitNewPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    const alertId = addAlert(
+      'info',
+      'Restableciendo contraseña...',
+      'Procesando',
+      undefined,
+      true,
+    );
     const otpValue =
       otp || inputRefs.current.map((e) => e?.value || '').join('');
 
@@ -222,13 +257,25 @@ function ResetPassword() {
         },
       );
       if (data.success) {
-        toast.success(data.message);
+        addAlert(
+          'success',
+          data.message || 'Contraseña restablecida con éxito.',
+          'Éxito',
+          alertId,
+          false,
+        );
         navigate('/login');
       } else {
-        toast.error(data.message);
+        addAlert('error', data.message, 'Validación Fallida', alertId, false);
       }
-    } catch (error) {
-      toast.error((error as Error).message);
+    } catch (error: any) {
+      addAlert(
+        'error',
+        error.message || 'Error al restablecer la contraseña',
+        'Error del Sistema',
+        alertId,
+        false,
+      );
     } finally {
       setLoading(false);
     }
@@ -458,6 +505,13 @@ function ResetPassword() {
           {t('securityFooter')}
         </div>
       </motion.div>
+
+      {/* RENDERIZADO DE ALERTAS DE CLOUDSCAPE (Flashbar) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[600px] px-4 pointer-events-none transition-all duration-300">
+        <div className="pointer-events-auto shadow-2xl rounded-xl overflow-hidden">
+          <Flashbar items={alerts as any} stackItems={true} />
+        </div>
+      </div>
     </div>
   );
 }

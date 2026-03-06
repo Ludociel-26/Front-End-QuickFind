@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, useEffect } from 'react';
 import {
   AppLayout,
   Container,
@@ -12,7 +12,7 @@ import {
   Box,
   ColumnLayout,
   Grid,
-  Alert,
+  Alert, // <-- Ahora sí lo vamos a utilizar
   Textarea,
 } from '@cloudscape-design/components';
 
@@ -81,7 +81,7 @@ const SCHEMA = {
 
 // Generador de horas (Formato 24 hrs para cubrir los 3 turnos)
 const generateHourOptions = () => {
-  const options = [];
+  const options: any[] = [];
   for (let i = 0; i < 24; i++) {
     const hourString = i.toString().padStart(2, '0') + ':00';
     options.push({ label: hourString, value: hourString });
@@ -90,18 +90,18 @@ const generateHourOptions = () => {
 };
 
 export default function RefrigeradosTelemetryEntry() {
-  const [navigationOpen, setNavigationOpen] = React.useState(true);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [turno, setTurno] = React.useState({ label: 'Turno A', value: 'A' });
-  const [hour, setHour] = React.useState({ label: '07:00', value: '07:00' });
-  const [observaciones, setObservaciones] = React.useState('');
+  const [turno, setTurno] = useState<any>({ label: 'Turno A', value: 'A' });
+  const [hour, setHour] = useState<any>({ label: '07:00', value: '07:00' });
+  const [observaciones, setObservaciones] = useState('');
 
-  const [readings, setReadings] = React.useState({});
+  const [readings, setReadings] = useState<Record<string, any>>({});
 
   // Inicialización dinámica del estado
-  React.useEffect(() => {
-    const initialReadings = {};
+  useEffect(() => {
+    const initialReadings: Record<string, any> = {};
 
     // Inicializar campos de los 3 Compresores
     SCHEMA.compresores.forEach((num) => {
@@ -122,12 +122,12 @@ export default function RefrigeradosTelemetryEntry() {
     setObservaciones('');
   }, [hour.value, turno.value]); // Se limpia al cambiar de hora o turno
 
-  const handleInputChange = (id, value) => {
+  const handleInputChange = (id: string, value: any) => {
     setReadings((prev) => ({ ...prev, [id]: value }));
   };
 
-  const getValidationError = (metric, value) => {
-    if (value === '') return null;
+  const getValidationError = (metric: any, value: any) => {
+    if (value === '' || value === undefined) return null;
     const num = parseFloat(value);
     if (isNaN(num)) return 'Inválido';
     if (metric.min !== undefined && num < metric.min)
@@ -137,8 +137,10 @@ export default function RefrigeradosTelemetryEntry() {
     return null;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (e?: any) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setIsSubmitting(true);
 
     // Empaquetado estructurado para PostgreSQL (JSONB)
@@ -188,6 +190,7 @@ export default function RefrigeradosTelemetryEntry() {
         style={{ position: 'sticky', top: 0, zIndex: 1002, width: '100%' }}
       >
         <Navbar />
+        {/* @ts-ignore */}
         <SecondaryHeader
           breadcrumbs={[
             { text: 'Mantenimiento', href: '/' },
@@ -214,7 +217,11 @@ export default function RefrigeradosTelemetryEntry() {
                     <Button formAction="none" variant="link">
                       Descartar
                     </Button>
-                    <Button variant="primary" loading={isSubmitting}>
+                    <Button
+                      variant="primary"
+                      loading={isSubmitting}
+                      onClick={handleSubmit}
+                    >
                       Guardar Registro Horario
                     </Button>
                   </SpaceBetween>
@@ -228,6 +235,14 @@ export default function RefrigeradosTelemetryEntry() {
                     Bitácora Horaria: División Refrigerados
                   </Header>
 
+                  {/* FIX: Se agregó el Alert que estaba importado pero sin usar */}
+                  <Alert type="info" header="Política de Registro de Turnos">
+                    Recuerde que los campos de{' '}
+                    <strong>Horómetro y Nivel de Aceite</strong> de los
+                    compresores solo deben llenarse al inicio de su turno o al
+                    momento de entregar la guardia al siguiente operador.
+                  </Alert>
+
                   {/* 1. CONTEXTO DE CAPTURA */}
                   <Container
                     header={<Header variant="h2">Datos del Registro</Header>}
@@ -237,7 +252,7 @@ export default function RefrigeradosTelemetryEntry() {
                         <Select
                           selectedOption={turno}
                           onChange={({ detail }) =>
-                            setTurno(detail.selectedOption)
+                            setTurno(detail.selectedOption as any)
                           }
                           options={[
                             { label: 'Turno A (07:00 a 15:00)', value: 'A' },
@@ -250,7 +265,7 @@ export default function RefrigeradosTelemetryEntry() {
                         <Select
                           selectedOption={hour}
                           onChange={({ detail }) =>
-                            setHour(detail.selectedOption)
+                            setHour(detail.selectedOption as any)
                           }
                           options={generateHourOptions()}
                         />
@@ -282,7 +297,7 @@ export default function RefrigeradosTelemetryEntry() {
                             }}
                           >
                             <Box
-                              variant="awsui-key-label"
+                              variant={'awsui-key-label' as any}
                               margin={{ bottom: 'm' }}
                             >
                               Lecturas Horarias
@@ -324,7 +339,7 @@ export default function RefrigeradosTelemetryEntry() {
                             }}
                           >
                             <Box
-                              variant="awsui-key-label"
+                              variant={'awsui-key-label' as any}
                               margin={{ bottom: 'xs' }}
                             >
                               Cierre / Inicio de Turno

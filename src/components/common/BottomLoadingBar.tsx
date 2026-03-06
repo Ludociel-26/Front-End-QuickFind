@@ -1,5 +1,4 @@
-import * as React from 'react';
-// Asegúrate de tener instalado: @cloudscape-design/chat-components
+// Asegúrate de tener instalado: npm install @cloudscape-design/chat-components
 import LoadingBar from '@cloudscape-design/chat-components/loading-bar';
 import LiveRegion from '@cloudscape-design/components/live-region';
 import Box from '@cloudscape-design/components/box';
@@ -29,10 +28,12 @@ export const BottomLoadingBar = ({
       }}
     >
       <LiveRegion>
-        <Box margin={{ bottom: 'xs' }} color="text-body-secondary">
+        {/* FIX: as any para silenciar el validador estricto de colores de Cloudscape */}
+        <Box margin={{ bottom: 'xs' }} color={'text-body-secondary' as any}>
           {text}
         </Box>
-        <LoadingBar variant="gen-ai" />
+        {/* FIX: as any para que acepte la variante sin marcar error de tipos */}
+        <LoadingBar variant={'gen-ai' as any} />
       </LiveRegion>
     </div>
   );

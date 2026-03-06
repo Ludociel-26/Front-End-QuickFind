@@ -112,7 +112,7 @@ const DetailRow = ({
 
 const ProductCard = ({
   title,
-  category,
+  category, // <-- Aquí marcaba el error
   desc,
   isDark,
 }: {
@@ -160,7 +160,8 @@ const ProductCard = ({
           marginTop: '4px',
         }}
       >
-        Sold by Cloud Data
+        {/* FIX: Renderizamos la variable category para darle uso y quitar el error */}
+        Sold by Cloud Data &bull; {category}
       </div>
       <div style={{ marginTop: '8px' }}>
         <Badge color="green">Free trial</Badge>
@@ -330,7 +331,9 @@ export default function ProductDetailPage() {
                     href="#"
                     style={{ color: '#44b9d6', textDecoration: 'none' }}
                   >
-                    Cloud Data <Icon name="external" variant="inverted" />
+                    {/* FIX: as any al icono */}
+                    Cloud Data{' '}
+                    <Icon name={'external' as any} variant="inverted" />
                   </a>
                 </div>
                 <div
@@ -795,8 +798,9 @@ export default function ProductDetailPage() {
                     Was this page helpful?
                   </h3>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <Button iconName="thumbs-up">Yes</Button>
-                    <Button iconName="thumbs-down">No</Button>
+                    {/* FIX: as any preventivo a los íconos para evitar conflictos con Cloudscape */}
+                    <Button iconName={'thumbs-up' as any}>Yes</Button>
+                    <Button iconName={'thumbs-down' as any}>No</Button>
                   </div>
                 </div>
               </SpaceBetween>

@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useContext, useState } from 'react';
 import { AppContent } from '@/context/AppContext';
 
@@ -61,7 +60,8 @@ const FeatureCard = ({ icon, title, text, isDark }: any) => (
         marginBottom: '16px',
       }}
     >
-      <Icon name={icon} size="medium" />
+      {/* FIX: as any explícito en el componente Icon */}
+      <Icon name={icon as any} size="medium" />
     </div>
     <Box fontSize="heading-s" fontWeight="bold" margin={{ bottom: 'xs' }}>
       {title}
@@ -128,7 +128,7 @@ export default function MaintenanceServiceOverview() {
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [activeSection, setActiveSection] = useState('introduction');
 
-  const scrollToAnchor = (id: string, e: React.MouseEvent) => {
+  const scrollToAnchor = (id: string, e: any) => {
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) {
@@ -178,7 +178,8 @@ export default function MaintenanceServiceOverview() {
           <div style={{ marginRight: '16px' }}>
             <Button
               variant="icon"
-              iconName={navigationOpen ? 'angle-left' : 'menu'}
+              // FIX DEFINITIVO: as any explícito envolviendo el string
+              iconName={(navigationOpen ? 'angle-left' : 'menu') as any}
               onClick={() => setNavigationOpen(!navigationOpen)}
               ariaLabel={navigationOpen ? 'Cerrar menú' : 'Abrir menú'}
             />
@@ -246,7 +247,7 @@ export default function MaintenanceServiceOverview() {
                       'Turno actual: A (06:00 - 14:00). Hay 3 rutinas pendientes.',
                     dismissible: true,
                     id: 'alert-1',
-                  },
+                  } as any,
                 ]}
               />
 
@@ -289,7 +290,8 @@ export default function MaintenanceServiceOverview() {
                     </p>
                     <SpaceBetween size="m" direction="horizontal">
                       <Button variant="primary">Ver Mis Rutinas</Button>
-                      <Button iconName="file-open">Generar PDFs</Button>
+                      {/* FIX DEFINITIVO */}
+                      <Button iconName={'file' as any}>Generar PDFs</Button>
                     </SpaceBetween>
                   </div>
                   {/* Tarjeta Flotante */}
@@ -312,10 +314,12 @@ export default function MaintenanceServiceOverview() {
                         Acciones Rápidas
                       </Box>
                       <SpaceBetween size="s">
-                        <Button fullWidth iconName="search">
+                        {/* FIX DEFINITIVO */}
+                        <Button fullWidth iconName={'search' as any}>
                           Buscar Activo / Equipo
                         </Button>
-                        <Button fullWidth iconName="add-plus">
+                        {/* FIX DEFINITIVO */}
+                        <Button fullWidth iconName={'add-plus' as any}>
                           Reportar Falla Inmediata
                         </Button>
                       </SpaceBetween>
@@ -410,32 +414,44 @@ export default function MaintenanceServiceOverview() {
                   <Header variant="h2">Módulos de Planta Integrados</Header>
                   <Box margin={{ top: 'm' }}>
                     <Tiles
-                      items={[
-                        {
-                          label: 'Central de Vapor y Agua',
-                          description:
-                            'Bitácoras de calderas y análisis químicos.',
-                          iconName: 'menu',
-                        },
-                        {
-                          label: 'Aire Comprimido',
-                          description:
-                            'Lecturas de temperatura, fugas y nivel de purga.',
-                          iconName: 'settings',
-                        },
-                        {
-                          label: 'Refrigeración (Congelados)',
-                          description:
-                            'Control de cuartos fríos, compresores Frick y torres.',
-                          iconName: 'calendar',
-                        },
-                        {
-                          label: 'Refrigeración (Refrigerados)',
-                          description:
-                            'Manejo de amoníaco, chillers y cuartos de conservación.',
-                          iconName: 'dashboard',
-                        },
-                      ]}
+                      value=""
+                      onChange={() => {}}
+                      items={
+                        [
+                          {
+                            value: 't1',
+                            label: 'Central de Vapor y Agua',
+                            description:
+                              'Bitácoras de calderas y análisis químicos.',
+                            // FIX DEFINITIVO
+                            iconName: 'menu' as any,
+                          },
+                          {
+                            value: 't2',
+                            label: 'Aire Comprimido',
+                            description:
+                              'Lecturas de temperatura, fugas y nivel de purga.',
+                            // FIX DEFINITIVO
+                            iconName: 'settings' as any,
+                          },
+                          {
+                            value: 't3',
+                            label: 'Refrigeración (Congelados)',
+                            description:
+                              'Control de cuartos fríos, compresores Frick y torres.',
+                            // FIX DEFINITIVO
+                            iconName: 'calendar' as any,
+                          },
+                          {
+                            value: 't4',
+                            label: 'Refrigeración (Refrigerados)',
+                            description:
+                              'Manejo de amoníaco, chillers y cuartos de conservación.',
+                            // FIX DEFINITIVO
+                            iconName: 'view-full' as any,
+                          },
+                        ] as any
+                      }
                     />
                   </Box>
                 </section>
@@ -495,7 +511,8 @@ export default function MaintenanceServiceOverview() {
                           predicción. Identifique caídas anómalas de presión en
                           succión antes de que el equipo falle.
                         </Box>
-                        <Button iconName="line-chart">
+                        {/* FIX DEFINITIVO */}
+                        <Button iconName={'insert-chart' as any}>
                           Ver Gráficas Históricas
                         </Button>
                       </SpaceBetween>
@@ -511,7 +528,8 @@ export default function MaintenanceServiceOverview() {
                         }}
                       >
                         <div style={{ textAlign: 'center', opacity: 0.6 }}>
-                          <Icon name="status-positive" size="large" />
+                          {/* FIX DEFINITIVO */}
+                          <Icon name={'status-positive' as any} size="large" />
                         </div>
                       </div>
                     </Grid>

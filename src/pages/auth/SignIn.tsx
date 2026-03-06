@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 
 import '@cloudscape-design/global-styles/index.css';
-// 1. IMPORTAMOS Flashbar
 import { Button, Flashbar } from '@cloudscape-design/components';
 import { useLanguage } from '@/context/LanguageContext';
 import { AppContent } from '@/context/AppContext';
@@ -85,7 +84,7 @@ const AnimatedInput = ({
     setDisplayedText('');
     const typeChar = () => {
       if (placeholder && index < placeholder.length) {
-        setDisplayedText((prev) => placeholder.slice(0, index + 1));
+        setDisplayedText(placeholder.slice(0, index + 1));
         index++;
         timeoutId = setTimeout(typeChar, 30 + Math.random() * 50);
       }
@@ -398,7 +397,7 @@ export default function Login() {
     throw new Error('AppContent must be used within AppContextProvider');
   }
 
-  // 2. EXTRAEMOS alerts
+  // 🚩 EXTRAEMOS LA FUNCIÓN DE SINCRONIZACIÓN
   const {
     theme,
     isDark,
@@ -410,8 +409,9 @@ export default function Login() {
     userData,
     setPageLoading,
     addAlert,
-    alerts, // <-- Agregamos esta línea
-  } = appContext;
+    alerts,
+    executeGlobalLoginSync,
+  } = appContext as any;
 
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -477,7 +477,7 @@ export default function Login() {
   const isFormValid =
     strengthPercent === 100 && formData.password === formData.confirmPassword;
 
-  // LÓGICA DE SUBMIT USANDO LA ALERTA GLOBAL
+  // LÓGICA DE SUBMIT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPageLoading(true);
@@ -498,7 +498,7 @@ export default function Login() {
           name: formData.name,
           surname: formData.surname,
           country: formData.country,
-          birthday: formData.birthday,
+          birth_date: formData.birthday,
           email: formData.email,
           password: formData.password,
         });
@@ -512,8 +512,14 @@ export default function Login() {
             alertId,
             false,
           );
+
           setIsLoggedin(true);
           await getUserData();
+
+          // 🚩 MAGIA AWS: Avisa a las otras pestañas que ya hay sesión activa
+          if (executeGlobalLoginSync) {
+            executeGlobalLoginSync();
+          }
         } else {
           addAlert(
             'warning',
@@ -539,8 +545,14 @@ export default function Login() {
             alertId,
             false,
           );
+
           setIsLoggedin(true);
           await getUserData();
+
+          // 🚩 MAGIA AWS: Avisa a las otras pestañas que ya hay sesión activa
+          if (executeGlobalLoginSync) {
+            executeGlobalLoginSync();
+          }
         } else {
           addAlert(
             'warning',
@@ -619,7 +631,6 @@ export default function Login() {
 
   const validationLabels = t('passStrength') || [];
 
-  // Regla de Hooks: Este return condicional siempre debe ir después de TODOS los useState/useEffect
   if (isLoggedin) {
     return null;
   }
@@ -1021,7 +1032,6 @@ export default function Login() {
           />
         </motion.div>
 
-        {/* 3. RENDERIZADO LOCAL: Flashbar en la parte inferior solo para el Login */}
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[600px] px-4 pointer-events-none transition-all duration-300">
           <div className="pointer-events-auto shadow-2xl rounded-xl overflow-hidden">
             <Flashbar items={alerts as any} stackItems={true} />

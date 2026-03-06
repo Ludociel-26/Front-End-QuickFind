@@ -5,21 +5,19 @@ import { AppContent } from '@/context/AppContext';
 import {
   Button,
   Container,
-  Header,
   SpaceBetween,
-  Link,
   Box,
   Grid,
   Icon,
   TopNavigation,
   Flashbar,
   Table,
-  Badge,
 } from '@cloudscape-design/components';
 
-// --- DATOS MOCK ---
+// ==========================================
+// DATOS MOCK
+// ==========================================
 
-// Datos para Tablas
 const motorsData = [
   {
     location: 'Línea de Envasado A',
@@ -38,24 +36,6 @@ const motorsData = [
   },
 ];
 
-const sensorsData = [
-  {
-    location: 'Tolva de Entrada',
-    type: 'Sensor de Proximidad',
-    protection: 'Cinta aislante + Capuchón plástico',
-  },
-  {
-    location: 'Salida de Producto',
-    type: 'Fotocelda',
-    protection: 'Limpieza en seco únicamente (Aire comprimido)',
-  },
-  {
-    location: 'Tanque de Agua',
-    type: 'Sensor de Nivel',
-    protection: 'Sellado hermético con silicón en juntas',
-  },
-];
-
 const tvsData = [
   {
     location: 'Sala de Control',
@@ -69,7 +49,24 @@ const tvsData = [
   },
 ];
 
-// Datos para Carruseles
+const lamparasData = [
+  {
+    location: 'Techos y Pasillos',
+    type: 'Lámparas IP65',
+    protection: 'Limpieza con paño húmedo. Nunca dirigir chorro hacia arriba.',
+  },
+  {
+    location: 'Columnas',
+    type: 'Centros de Carga / Conectores',
+    protection: 'Uso obligatorio de extensiones herméticas. Sellar bordes.',
+  },
+  {
+    location: 'Paredes / Zonas Bajas',
+    type: 'Tomacorrientes Industriales',
+    protection: 'Bajar tapa de resorte y verificar empaque de goma interno.',
+  },
+];
+
 const motorImages = [
   {
     src: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?q=80&w=1000&auto=format&fit=crop',
@@ -88,19 +85,6 @@ const motorImages = [
   },
 ];
 
-const sensorImages = [
-  {
-    src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop',
-    title: 'Sensores Ópticos',
-    desc: 'Limpiar lentes con paño de microfibra, no usar chorro directo.',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop',
-    title: 'Cableado Delicado',
-    desc: 'Organizar y proteger cables sueltos con cinchos.',
-  },
-];
-
 const tvImages = [
   {
     src: 'https://images.unsplash.com/photo-1593784697956-141c03410c58?q=80&w=1000&auto=format&fit=crop',
@@ -114,16 +98,116 @@ const tvImages = [
   },
 ];
 
-const SECTIONS = [
-  { id: 'overview', text: 'Overview' },
-  { id: 'motors', text: 'Motores' },
-  { id: 'sensors', text: 'Sensores' },
-  { id: 'televisions', text: 'Televisores' },
+const lamparasImages = [
+  {
+    src: 'https://images.unsplash.com/photo-1544724569-5f546fd6f2b6?q=80&w=1000&auto=format&fit=crop',
+    title: 'Iluminación Superior',
+    desc: 'Las luminarias tienen protección contra salpicaduras, pero no resisten inyección directa de agua.',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1000&auto=format&fit=crop',
+    title: 'Cajas de Conexión',
+    desc: 'Asegurar el uso de extensiones de caja y corroborar que los empalmes estén aislados.',
+  },
 ];
 
-// --- COMPONENTES UI PERSONALIZADOS ---
+const mondini2Images = [
+  {
+    src: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1000&auto=format&fit=crop',
+    title: 'Mondini 2 - Estructura',
+    desc: 'Asegurar paro total antes de aislar el sensor amarillo y el tablero.',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?q=80&w=1000&auto=format&fit=crop',
+    title: 'Zona de Dosificación',
+    desc: 'Proteger panel de jarabe, torreta y botonera minuciosamente.',
+  },
+];
 
-// 1. CARRUSEL ESTILO "WRITER" (Actualizado para visibilidad)
+const mondini3Images = [
+  {
+    src: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?q=80&w=1000&auto=format&fit=crop',
+    title: 'Mondini 3 - Puntos Críticos',
+    desc: 'Identificar el sensor naranja principal y aislar conectores expuestos.',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1611078485233-14eb02377b75?q=80&w=1000&auto=format&fit=crop',
+    title: 'Tracción Principal',
+    desc: 'Validar colores y sellar completamente las cajas de conexiones inferiores.',
+  },
+];
+
+const mondini6Images = [
+  {
+    src: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=1000&auto=format&fit=crop',
+    title: 'Mondini 6 - Arquitectura',
+    desc: 'Validar diferencias estructurales respecto a las líneas 2 y 3.',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=1000&auto=format&fit=crop',
+    title: 'Módulo de Sellado',
+    desc: 'Evitar inyección directa de agua en los servomotores de salida y arneses.',
+  },
+];
+
+// Menú lateral
+const SECTIONS = [
+  { id: 'overview', text: 'Overview del Plan' },
+  { id: 'motors', text: 'Motores Generales' },
+  { id: 'televisions', text: 'Televisores y HMI' },
+  { id: 'lamparas', text: 'Lámparas y Conectores' },
+  { id: 'mondini2', text: 'Línea Mondini 2' },
+  { id: 'mondini3', text: 'Línea Mondini 3' },
+  { id: 'mondini6', text: 'Línea Mondini 6' },
+];
+
+// ==========================================
+// COMPONENTES UI PERSONALIZADOS
+// ==========================================
+
+const SectionTitle = ({
+  title,
+  subtitle,
+  isDark,
+}: {
+  title: string;
+  subtitle?: string;
+  isDark: boolean;
+}) => (
+  <div
+    style={{
+      marginBottom: '32px',
+      borderBottom: `2px solid ${isDark ? '#414d5c' : '#eaeded'}`,
+      paddingBottom: '16px',
+    }}
+  >
+    <h2
+      style={{
+        fontSize: '38px',
+        fontWeight: '900',
+        color: isDark ? '#ffffff' : '#16191f',
+        margin: '0 0 12px 0',
+        letterSpacing: '-0.5px',
+        fontFamily: '"Amazon Ember Display", "Helvetica Neue", sans-serif',
+      }}
+    >
+      {title}
+    </h2>
+    {subtitle && (
+      <p
+        style={{
+          fontSize: '18px',
+          color: isDark ? '#aab7b8' : '#545b64',
+          margin: 0,
+          lineHeight: '1.5',
+        }}
+      >
+        {subtitle}
+      </p>
+    )}
+  </div>
+);
+
 const CustomCarousel = ({
   images,
   isDark,
@@ -133,7 +217,6 @@ const CustomCarousel = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto-play
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -145,7 +228,6 @@ const CustomCarousel = ({
   const prevSlide = () =>
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
 
-  // Estilos dinámicos para la barra de control según el tema
   const controlBarStyle = {
     backgroundColor: isDark
       ? 'rgba(22, 25, 31, 0.9)'
@@ -159,14 +241,13 @@ const CustomCarousel = ({
       style={{
         position: 'relative',
         width: '100%',
-        height: '400px',
+        height: '450px',
         borderRadius: '24px',
         overflow: 'hidden',
         boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-        marginBottom: '24px',
+        marginBottom: '32px',
       }}
     >
-      {/* Imagen de Fondo */}
       {images.map((img, index) => (
         <div
           key={index}
@@ -186,7 +267,6 @@ const CustomCarousel = ({
             alt={img.title}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
-          {/* Gradiente Overlay para texto */}
           <div
             style={{
               position: 'absolute',
@@ -195,38 +275,37 @@ const CustomCarousel = ({
               width: '100%',
               height: '100%',
               background:
-                'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
+                'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%)',
             }}
           ></div>
         </div>
       ))}
 
-      {/* Contenido de Texto (Izquierda Abajo) */}
       <div
         style={{
           position: 'absolute',
-          bottom: '40px',
-          left: '40px',
+          bottom: '50px',
+          left: '50px',
           zIndex: 10,
           color: '#fff',
-          maxWidth: '500px',
+          maxWidth: '600px',
         }}
       >
         <div
           style={{
             backgroundColor: 'rgba(255,255,255,0.2)',
             backdropFilter: 'blur(4px)',
-            padding: '4px 8px',
+            padding: '6px 12px',
             borderRadius: '4px',
-            fontSize: '12px',
+            fontSize: '13px',
             fontFamily: 'monospace',
             display: 'inline-block',
             marginBottom: '16px',
+            fontWeight: 'bold',
           }}
         >
-          PROCEDIMIENTO {currentIndex + 1}
+          VISTA {currentIndex + 1}
         </div>
-
         <h2
           style={{
             fontSize: '48px',
@@ -234,52 +313,38 @@ const CustomCarousel = ({
             margin: '0 0 16px 0',
             textTransform: 'uppercase',
             fontFamily: 'Impact, sans-serif',
-            lineHeight: '0.9',
+            lineHeight: '1',
           }}
         >
           {images[currentIndex].title}
         </h2>
-
         <p
           style={{
             fontSize: '18px',
-            lineHeight: '1.4',
-            margin: '0 0 24px 0',
+            lineHeight: '1.5',
+            margin: '0',
             fontWeight: '500',
+            color: '#e2e8f0',
           }}
         >
           {images[currentIndex].desc}
         </p>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-          }}
-        >
-          Ver detalle <Icon name="arrow-right" variant="inverted" />
-        </div>
       </div>
 
-      {/* Controles de Navegación (Abajo Centro/Derecha) - ACTUALIZADO */}
       <div
         style={{
           position: 'absolute',
-          bottom: '30px',
-          right: '40px',
+          bottom: '40px',
+          right: '50px',
           zIndex: 10,
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          padding: '8px 16px',
+          gap: '16px',
+          padding: '10px 20px',
           borderRadius: '30px',
-          ...controlBarStyle, // Aplica estilos dinámicos
+          ...controlBarStyle,
         }}
       >
-        {/* Usamos variant="normal" para que Cloudscape use el color de texto heredado del contenedor */}
         <button
           onClick={prevSlide}
           style={{
@@ -290,9 +355,9 @@ const CustomCarousel = ({
             display: 'flex',
           }}
         >
-          <Icon name="angle-left" variant="normal" />
+          <Icon name={'angle-left' as any} variant="normal" />
         </button>
-        <span style={{ fontSize: '14px', fontWeight: 'bold' }}>
+        <span style={{ fontSize: '15px', fontWeight: 'bold' }}>
           {currentIndex + 1} / {images.length}
         </span>
         <button
@@ -305,14 +370,13 @@ const CustomCarousel = ({
             display: 'flex',
           }}
         >
-          <Icon name="angle-right" variant="normal" />
+          <Icon name={'angle-right' as any} variant="normal" />
         </button>
       </div>
     </div>
   );
 };
 
-// 2. CONTENEDOR DE OBSERVACIONES (Elegante)
 const ObservationContainer = ({
   title,
   content,
@@ -326,28 +390,34 @@ const ObservationContainer = ({
     style={{
       borderLeft: `4px solid ${isDark ? '#44b9d6' : '#0073bb'}`,
       backgroundColor: isDark ? 'rgba(68, 185, 214, 0.1)' : '#f1faff',
-      padding: '20px',
+      padding: '24px',
       borderRadius: '0 8px 8px 0',
-      marginTop: '20px',
+      marginTop: '24px',
     }}
   >
     <h4
       style={{
-        margin: '0 0 8px 0',
+        margin: '0 0 10px 0',
         color: isDark ? '#fff' : '#16191f',
-        fontSize: '16px',
+        fontSize: '18px',
         fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
       }}
     >
-      <Icon name="status-info" variant={isDark ? 'inverted' : 'normal'} />{' '}
+      <Icon
+        name={'status-info' as any}
+        variant={isDark ? 'inverted' : 'normal'}
+      />{' '}
       {title}
     </h4>
     <p
       style={{
         margin: 0,
         color: isDark ? '#d1d5db' : '#545b64',
-        fontSize: '14px',
-        lineHeight: '1.5',
+        fontSize: '15px',
+        lineHeight: '1.6',
       }}
     >
       {content}
@@ -362,7 +432,6 @@ export default function CleaningPlanPage() {
 
   const [activeSection, setActiveSection] = React.useState('overview');
 
-  // Paleta de colores dinámica
   const colors = {
     bgPage: isDark ? '#0f1b2a' : '#ffffff',
     bgHeader: '#16191f',
@@ -393,11 +462,9 @@ export default function CleaningPlanPage() {
     const element = document.getElementById(id);
     if (element) {
       const offset = 180;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      const elementPosition =
+        element.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elementPosition - offset, behavior: 'smooth' });
     }
   };
 
@@ -419,7 +486,7 @@ export default function CleaningPlanPage() {
             href: '#',
             title: 'Sistema de Mantenimiento',
             logo: {
-              src: 'https://d1.awsstatic.com/webteam/nav/global-nav-logos/aws-logo-white.png', // O tu logo
+              src: 'https://d1.awsstatic.com/webteam/nav/global-nav-logos/aws-logo-white.png',
               alt: 'Logo',
             },
           }}
@@ -427,10 +494,10 @@ export default function CleaningPlanPage() {
         />
       </div>
 
-      {/* 2. HEADER: PLAN DE LIMPIEZA */}
+      {/* 2. HEADER */}
       <div style={{ backgroundColor: colors.bgHeader, width: '100%' }}>
         <div
-          style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 40px' }}
+          style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 40px' }}
         >
           <div style={{ paddingTop: '20px' }}>
             <Flashbar
@@ -440,8 +507,8 @@ export default function CleaningPlanPage() {
                   dismissible: true,
                   content: (
                     <Box fontSize="body-s">
-                      <strong>Precaución:</strong> Asegúrese de desconectar la
-                      energía eléctrica (Lockout/Tagout) antes de iniciar
+                      <strong>Precaución (LOTO):</strong> Asegúrese de
+                      desconectar la energía eléctrica general antes de iniciar
                       cualquier procedimiento de limpieza con agua.
                     </Box>
                   ),
@@ -451,13 +518,13 @@ export default function CleaningPlanPage() {
             />
           </div>
 
-          <div style={{ padding: '20px 0 40px 0', color: '#ffffff' }}>
+          <div style={{ padding: '30px 0 50px 0', color: '#ffffff' }}>
             <nav
               aria-label="Breadcrumb"
-              style={{ marginBottom: '10px', fontSize: '14px' }}
+              style={{ marginBottom: '16px', fontSize: '14px' }}
             >
-              <span style={{ color: '#879596' }}>Mantenimiento</span>
-              <span style={{ margin: '0 8px', color: '#879596' }}>/</span>
+              <span style={{ color: '#879596' }}>Mantenimiento</span>{' '}
+              <span style={{ margin: '0 8px', color: '#879596' }}>/</span>{' '}
               <span style={{ color: '#fbfbfb' }}>Protocolos de Limpieza</span>
             </nav>
 
@@ -468,66 +535,56 @@ export default function CleaningPlanPage() {
               ]}
             >
               <div>
-                {/* TÍTULO ACTUALIZADO */}
                 <h1
                   style={{
-                    fontSize: '32px',
-                    fontWeight: '800',
-                    margin: '0 0 10px 0',
+                    fontSize: '40px',
+                    fontWeight: '900',
+                    margin: '0 0 16px 0',
                     color: '#ffffff',
+                    letterSpacing: '-0.5px',
                   }}
                 >
                   Plan de Limpieza: Puntos Críticos
                 </h1>
                 <p
                   style={{
-                    fontSize: '16px',
-                    lineHeight: '24px',
+                    fontSize: '18px',
+                    lineHeight: '28px',
                     color: '#d1d5db',
-                    maxWidth: '700px',
-                    marginBottom: '20px',
+                    maxWidth: '800px',
+                    marginBottom: '24px',
                   }}
                 >
                   Guía estandarizada para el cubrimiento y protección de
-                  componentes sensibles (motores, sensores, pantallas) durante
+                  componentes sensibles (motores, paneles, pantallas) durante
                   las actividades de saneamiento para prevenir fallas por
                   humedad.
                 </p>
-
-                <div style={{ fontSize: '14px', color: '#d1d5db' }}>
+                <div style={{ fontSize: '15px', color: '#d1d5db' }}>
                   Responsable:{' '}
                   <span style={{ color: '#44b9d6', fontWeight: 'bold' }}>
                     Equipo de Mantenimiento
                   </span>
                 </div>
-                <div
-                  style={{
-                    fontSize: '14px',
-                    color: '#d1d5db',
-                    marginTop: '4px',
-                  }}
-                >
-                  Tags: IP65 | Seguridad | Mantenimiento Preventivo
-                </div>
               </div>
-
               <Box float="right">
                 <div style={{ width: '100%', maxWidth: '300px' }}>
-                  <SpaceBetween size="s" direction="vertical">
+                  <SpaceBetween size="m" direction="vertical">
                     <Button variant="primary" fullWidth>
                       Descargar Checklist PDF
                     </Button>
                     <button
                       style={{
                         width: '100%',
-                        padding: '8px 16px',
+                        padding: '10px 16px',
                         backgroundColor: 'transparent',
                         border: '1px solid #ffffff',
-                        borderRadius: '20px',
+                        borderRadius: '24px',
                         color: '#ffffff',
                         fontWeight: '700',
                         cursor: 'pointer',
                         fontSize: '14px',
+                        transition: 'all 0.2s',
                       }}
                     >
                       Reportar Incidencia
@@ -543,219 +600,312 @@ export default function CleaningPlanPage() {
       {/* 3. CONTENIDO PRINCIPAL */}
       <div
         style={{
-          maxWidth: '1240px',
+          maxWidth: '1400px',
           margin: '0 auto',
-          padding: '40px',
+          padding: '60px 40px',
           color: colors.textMain,
         }}
       >
         <Grid
           gridDefinition={[
-            { colspan: { default: 12, s: 8, m: 9 } },
-            { colspan: { default: 12, s: 4, m: 3 } },
+            { colspan: { default: 12, s: 9, m: 10 } },
+            { colspan: { default: 12, s: 3, m: 2 } },
           ]}
         >
           {/* --- COLUMNA IZQUIERDA (CONTENIDO) --- */}
-          <div>
-            <SpaceBetween size="xxl">
-              {/* SECCIÓN 1: OVERVIEW */}
-              <div id="overview">
-                <Header variant="h2">Overview</Header>
-                <div
-                  style={{
-                    marginTop: '10px',
-                    fontSize: '16px',
-                    lineHeight: '24px',
-                    color: colors.textMain,
-                  }}
-                >
-                  <p>
-                    La limpieza profunda de los equipos industriales conlleva el
-                    uso de agua a presión y químicos desengrasantes. Sin
-                    embargo, la principal causa de paros no programados
-                    post-limpieza es la entrada de agua en componentes
-                    electrónicos.
-                  </p>
-                  <p>
-                    Este plan detalla{' '}
-                    <strong>
-                      la forma correcta de cubrir todos los componentes
-                      eléctricos
-                    </strong>{' '}
-                    (sensores, televisores, motores, gabinetes) evitando que se
-                    mojen. El objetivo es garantizar la integridad del equipo y
-                    la seguridad del personal, asegurando un arranque vertical
-                    sin fallas después del saneamiento.
-                  </p>
-                </div>
-              </div>
-
-              {/* SECCIÓN 2: MOTORES */}
-              <div id="motors">
-                <Header variant="h2">Motores</Header>
-                <p
-                  style={{ marginBottom: '16px', color: colors.textSecondary }}
-                >
-                  Los motores eléctricos deben ser aislados completamente,
-                  protegiendo especialmente la caja de conexiones y las ventilas
-                  de enfriamiento.
+          <div style={{ paddingRight: '40px' }}>
+            {/* OVERVIEW */}
+            <div id="overview" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Overview General"
+                subtitle="Principios básicos para la preservación de equipos durante el saneamiento."
+                isDark={isDark}
+              />
+              <div
+                style={{
+                  fontSize: '18px',
+                  lineHeight: '1.6',
+                  color: colors.textMain,
+                }}
+              >
+                <p>
+                  La limpieza profunda de los equipos industriales conlleva el
+                  uso de agua a presión y químicos desengrasantes. Sin embargo,
+                  la principal causa de paros no programados post-limpieza es la
+                  entrada de agua en componentes electrónicos o
+                  electromecánicos.
                 </p>
+                <p>
+                  Este plan detalla{' '}
+                  <strong>
+                    la forma correcta de aislar todos los componentes eléctricos
+                    perimetrales
+                  </strong>{' '}
+                  (lámparas, televisores, motores, conectores), así como la
+                  estructura específica de protección para cada línea de
+                  envasado (Mondini). El objetivo es garantizar un arranque
+                  vertical sin incidencias y proteger la seguridad del personal.
+                </p>
+              </div>
+            </div>
 
-                {/* Tabla de Ubicaciones */}
-                <div style={{ marginBottom: '24px' }}>
-                  <Container
-                    header={
-                      <Header variant="h3">
-                        Ubicación y Protección Requerida
-                      </Header>
-                    }
-                  >
-                    <Table
-                      variant="embedded"
-                      columnDefinitions={[
-                        {
-                          id: 'location',
-                          header: 'Ubicación',
-                          cell: (e) => e.location,
-                          width: 200,
-                          isRowHeader: true,
-                        },
-                        {
-                          id: 'type',
-                          header: 'Tipo de Equipo',
-                          cell: (e) => e.type,
-                        },
-                        {
-                          id: 'protection',
-                          header: 'Método de Protección',
-                          cell: (e) => e.protection,
-                        },
-                      ]}
-                      items={motorsData}
-                    />
-                  </Container>
-                </div>
-
-                {/* Carrusel Visual */}
+            {/* MOTORES */}
+            <div id="motors" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Motores y Chumaceras"
+                subtitle="Aislamiento obligatorio de actuadores de movimiento perimetrales e internos."
+                isDark={isDark}
+              />
+              <Container>
+                <Table
+                  variant="embedded"
+                  columnDefinitions={[
+                    {
+                      id: 'location',
+                      header: 'Ubicación',
+                      cell: (e) => e.location,
+                      width: 250,
+                      isRowHeader: true,
+                    },
+                    {
+                      id: 'type',
+                      header: 'Tipo de Equipo',
+                      cell: (e) => e.type,
+                      width: 250,
+                    },
+                    {
+                      id: 'protection',
+                      header: 'Método de Protección',
+                      cell: (e) => e.protection,
+                    },
+                  ]}
+                  items={motorsData}
+                />
+              </Container>
+              <Box margin={{ top: 'xl' }}>
                 <CustomCarousel images={motorImages} isDark={isDark} />
+              </Box>
+              <ObservationContainer
+                title="Procedimiento Crítico - Motores"
+                content="Nunca utilice bolsas rotas. Asegúrese de hacer un 'nudo ciego' en la parte inferior del motor para evitar que el agua escurra hacia adentro. Si el motor tiene ventilador externo, cubra las rejillas con doble capa de plástico grueso."
+                isDark={isDark}
+              />
+            </div>
 
-                {/* Info Box */}
-                <ObservationContainer
-                  title="Procedimiento Crítico - Motores"
-                  content="Nunca utilice bolsas rotas. Asegúrese de hacer un 'nudo ciego' en la parte inferior del motor para evitar que el agua escurra hacia adentro. Si el motor tiene ventilador externo, cubra las rejillas con doble capa de plástico."
-                  isDark={isDark}
+            {/* TELEVISORES */}
+            <div id="televisions" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Televisores y Monitores HMI"
+                subtitle="Resguardo de interfaces visuales e indicadores de sala."
+                isDark={isDark}
+              />
+              <Container>
+                <Table
+                  variant="embedded"
+                  columnDefinitions={[
+                    {
+                      id: 'location',
+                      header: 'Área',
+                      cell: (e) => e.location,
+                      width: 250,
+                    },
+                    {
+                      id: 'type',
+                      header: 'Dispositivo',
+                      cell: (e) => e.type,
+                      width: 250,
+                    },
+                    {
+                      id: 'protection',
+                      header: 'Protección',
+                      cell: (e) => e.protection,
+                    },
+                  ]}
+                  items={tvsData}
                 />
-              </div>
-
-              {/* SECCIÓN 3: SENSORES */}
-              <div id="sensors">
-                <Header variant="h2">Sensores</Header>
-                <p
-                  style={{ marginBottom: '16px', color: colors.textSecondary }}
-                >
-                  Los sensores ópticos, inductivos y capacitivos son
-                  extremadamente sensibles. Un chorro directo puede
-                  desalinearlos o dañar sus sellos internos.
-                </p>
-
-                {/* Tabla Sensores */}
-                <div style={{ marginBottom: '24px' }}>
-                  <Container
-                    header={
-                      <Header variant="h3">Inventario de Sensores</Header>
-                    }
-                  >
-                    <Table
-                      variant="embedded"
-                      columnDefinitions={[
-                        {
-                          id: 'location',
-                          header: 'Ubicación',
-                          cell: (e) => e.location,
-                          width: 200,
-                        },
-                        { id: 'type', header: 'Tipo', cell: (e) => e.type },
-                        {
-                          id: 'protection',
-                          header: 'Cuidados Específicos',
-                          cell: (e) => e.protection,
-                        },
-                      ]}
-                      items={sensorsData}
-                    />
-                  </Container>
-                </div>
-
-                {/* Carrusel Sensores */}
-                <CustomCarousel images={sensorImages} isDark={isDark} />
-
-                {/* Info Box */}
-                <ObservationContainer
-                  title="Nota Técnica - Sensores"
-                  content="No utilice cinta adhesiva directamente sobre el lente del sensor, ya que el residuo de pegamento afectará la lectura. Utilice siempre un capuchón o una bolsa pequeña fijada al cuerpo del sensor, no al lente."
-                  isDark={isDark}
-                />
-              </div>
-
-              {/* SECCIÓN 4: TELEVISORES / HMI */}
-              <div id="televisions">
-                <Header variant="h2">Televisores y HMI</Header>
-                <p
-                  style={{ marginBottom: '16px', color: colors.textSecondary }}
-                >
-                  Las pantallas y monitores de visualización son los componentes
-                  más costosos y frágiles. Requieren protección rígida.
-                </p>
-
-                {/* Tabla TVs */}
-                <div style={{ marginBottom: '24px' }}>
-                  <Container
-                    header={<Header variant="h3">Pantallas y Paneles</Header>}
-                  >
-                    <Table
-                      variant="embedded"
-                      columnDefinitions={[
-                        {
-                          id: 'location',
-                          header: 'Área',
-                          cell: (e) => e.location,
-                          width: 200,
-                        },
-                        {
-                          id: 'type',
-                          header: 'Dispositivo',
-                          cell: (e) => e.type,
-                        },
-                        {
-                          id: 'protection',
-                          header: 'Protección',
-                          cell: (e) => e.protection,
-                        },
-                      ]}
-                      items={tvsData}
-                    />
-                  </Container>
-                </div>
-
-                {/* Carrusel TVs */}
+              </Container>
+              <Box margin={{ top: 'xl' }}>
                 <CustomCarousel images={tvImages} isDark={isDark} />
+              </Box>
+              <ObservationContainer
+                title="Protocolo HMI"
+                content="Verifique que el gabinete de las pantallas esté perfectamente cerrado. Si el sello de goma de la puerta está dañado o reseco, no aplique agua a presión en esa zona y levante un ticket a mantenimiento. Use paños anti-estáticos y desengrasante manual."
+                isDark={isDark}
+              />
+            </div>
 
-                {/* Info Box */}
-                <ObservationContainer
-                  title="Protocolo HMI"
-                  content="Verifique que el gabinete esté perfectamente cerrado. Si el sello de goma de la puerta está dañado, no aplique agua en esa zona y reporte inmediatamente a mantenimiento. Use paños anti-estáticos."
-                  isDark={isDark}
+            {/* LÁMPARAS Y CONECTORES */}
+            <div id="lamparas" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Lámparas y Conectores de Corriente"
+                subtitle="Instalaciones eléctricas de infraestructura y pasillos."
+                isDark={isDark}
+              />
+              <Container>
+                <Table
+                  variant="embedded"
+                  columnDefinitions={[
+                    {
+                      id: 'location',
+                      header: 'Ubicación',
+                      cell: (e) => e.location,
+                      width: 250,
+                    },
+                    {
+                      id: 'type',
+                      header: 'Componente',
+                      cell: (e) => e.type,
+                      width: 250,
+                    },
+                    {
+                      id: 'protection',
+                      header: 'Protección',
+                      cell: (e) => e.protection,
+                    },
+                  ]}
+                  items={lamparasData}
                 />
-              </div>
-            </SpaceBetween>
+              </Container>
+              <Box margin={{ top: 'xl' }}>
+                <CustomCarousel images={lamparasImages} isDark={isDark} />
+              </Box>
+              <ObservationContainer
+                title="Precaución en Trabajos en Altura y Eléctricos"
+                content="Es terminantemente prohibido dirigir la hidrolavadora en ángulo ascendente hacia las luminarias. Adicionalmente, todo centro de carga debe ser conectado utilizando extensiones herméticas industriales; el uso de conectores convencionales sin empaque provocará un cortocircuito inminente."
+                isDark={isDark}
+              />
+            </div>
+
+            {/* SEPARADOR VISUAL FUERTE PARA MÁQUINAS */}
+            <div
+              style={{
+                height: '2px',
+                backgroundColor: colors.border,
+                marginBottom: '100px',
+              }}
+            ></div>
+
+            {/* MONDINI 2 */}
+            <div id="mondini2" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Empacadora Mondini 2"
+                subtitle="Protocolo de intervención segura y protección electromecánica."
+                isDark={isDark}
+              />
+              <p
+                style={{
+                  fontSize: '18px',
+                  lineHeight: '1.6',
+                  marginBottom: '32px',
+                  color: colors.textSecondary,
+                }}
+              >
+                Este plan de limpieza tiene como propósito principal garantizar
+                que, durante las labores de saneamiento o cualquier intervención
+                operativa, se evite toda situación de riesgo eléctrico o
+                mecánico. Para la línea <strong>Mondini 2</strong>, se detalla
+                la manera correcta de aislar y cubrir cada componente crítico,
+                como el banco de sensores (de carcasa amarilla) y el panel de
+                dosificación. Cabe destacar que su arquitectura y distribución
+                de componentes son casi idénticas a las de la Mondini 3, por lo
+                que comparten la mayor parte de las directrices de protección en
+                planta.
+              </p>
+              <CustomCarousel images={mondini2Images} isDark={isDark} />
+              <Box margin={{ top: 'xl' }}>
+                <Button
+                  variant="primary"
+                  iconName={'external' as any}
+                  iconAlign="right"
+                >
+                  Ver Componentes - Mondini 2
+                </Button>
+              </Box>
+            </div>
+
+            {/* MONDINI 3 */}
+            <div id="mondini3" style={{ marginBottom: '100px' }}>
+              <SectionTitle
+                title="Empacadora Mondini 3"
+                subtitle="Protocolo de intervención segura y protección electromecánica."
+                isDark={isDark}
+              />
+              <p
+                style={{
+                  fontSize: '18px',
+                  lineHeight: '1.6',
+                  marginBottom: '32px',
+                  color: colors.textSecondary,
+                }}
+              >
+                Al igual que su contraparte, el objetivo central de este
+                protocolo en la <strong>Mondini 3</strong> es proveer las
+                instrucciones exactas para cubrir adecuadamente cada elemento
+                sensible y prevenir riesgos durante el lavado a presión y las
+                tareas de saneamiento profundo. Aunque esta empacadora es casi
+                idéntica en cantidad y tipo de componentes a la Mondini 2,
+                presenta variaciones específicas, como el sensor de
+                enclavamiento principal (color naranja) y la servotransmisión,
+                los cuales requieren una técnica de sellado hermético
+                particular.
+              </p>
+              <CustomCarousel images={mondini3Images} isDark={isDark} />
+              <Box margin={{ top: 'xl' }}>
+                <Button
+                  variant="primary"
+                  iconName={'external' as any}
+                  iconAlign="right"
+                >
+                  Ver Componentes - Mondini 3
+                </Button>
+              </Box>
+            </div>
+
+            {/* MONDINI 6 */}
+            <div id="mondini6" style={{ marginBottom: '40px' }}>
+              <SectionTitle
+                title="Empacadora Mondini 6"
+                subtitle="Protocolo de intervención segura y protección electromecánica."
+                isDark={isDark}
+              />
+              <p
+                style={{
+                  fontSize: '18px',
+                  lineHeight: '1.6',
+                  marginBottom: '32px',
+                  color: colors.textSecondary,
+                }}
+              >
+                El propósito de evitar situaciones de riesgo durante el
+                saneamiento se mantiene inalterable para la línea{' '}
+                <strong>Mondini 6</strong>. Es fundamental estandarizar la
+                cobertura de los elementos mediante bolsas y empaques antes de
+                inyectar agua. Esta empacadora opera con una mayor capacidad de
+                producción, lo que se traduce en una distribución estructural
+                ligeramente más extensa y un mayor número de actuadores. Las
+                directrices dispuestas aquí aseguran que toda esa
+                instrumentación y los servomotores adicionales queden
+                perfectamente resguardados.
+              </p>
+              <CustomCarousel images={mondini6Images} isDark={isDark} />
+              <Box margin={{ top: 'xl' }}>
+                <Button
+                  variant="primary"
+                  iconName={'external' as any}
+                  iconAlign="right"
+                >
+                  Ver Componentes - Mondini 6
+                </Button>
+              </Box>
+            </div>
           </div>
 
           {/* --- COLUMNA DERECHA (STICKY NAV) --- */}
           <div
-            style={{ height: '100%', borderLeft: `0px solid ${colors.border}` }}
+            style={{ height: '100%', borderLeft: `1px solid ${colors.border}` }}
           >
             <div
-              style={{ position: 'sticky', top: '20px', paddingLeft: '0px' }}
+              style={{ position: 'sticky', top: '120px', paddingLeft: '20px' }}
             >
               <SpaceBetween size="l">
                 <div>
@@ -807,9 +957,11 @@ export default function CleaningPlanPage() {
                     ))}
                   </ul>
                 </div>
+
                 <div
                   style={{ height: '1px', backgroundColor: colors.border }}
                 ></div>
+
                 <div>
                   <h3
                     style={{
@@ -822,8 +974,8 @@ export default function CleaningPlanPage() {
                     ¿Fue útil este plan?
                   </h3>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <Button iconName="thumbs-up">Sí</Button>
-                    <Button iconName="thumbs-down">No</Button>
+                    <Button iconName={'thumbs-up' as any}>Sí</Button>
+                    <Button iconName={'thumbs-down' as any}>No</Button>
                   </div>
                 </div>
               </SpaceBetween>

@@ -1,4 +1,3 @@
-import * as React from 'react';
 // Importamos componentes visuales
 import {
   Link,

@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import {
   TopNavigation,
   Input,
   Icon,
   Select,
 } from '@cloudscape-design/components';
-import type { SelectProps } from '@cloudscape-design/components';
 import { applyDensity, Density } from '@cloudscape-design/global-styles';
 import { AppContent } from '@/context/AppContext';
 import type { ThemeMode } from '@/context/AppContext';
@@ -628,8 +627,6 @@ export const REFACCIONES_DATA = [
   },
 ];
 
-// --- Data Example ---
-
 const LANGUAGE_OPTIONS = [
   { label: 'Español', value: 'es' },
   { label: 'English (US)', value: 'en' },
@@ -661,15 +658,14 @@ const useIsMac = () => {
 export default function GlobalHeader() {
   const navigate = useNavigate();
 
-  // EXTRAEMOS addAlert DE TU CONTEXTO GLOBAL
+  // 🚩 IMPORTAMOS NUESTRA NUEVA FUNCIÓN GLOBAL PARA AVISAR A OTRAS PESTAÑAS
   const {
     userData,
     backendUrl,
-    setIsLoggedin,
-    setUserData,
     isLoggedin,
     setTheme,
     addAlert,
+    executeGlobalLogout,
   } = useContext(AppContent) || {};
 
   const isMac = useIsMac();
@@ -687,9 +683,7 @@ export default function GlobalHeader() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // Configuración
-  const [selectedLang, setSelectedLang] = useState<SelectProps.Option>(
-    LANGUAGE_OPTIONS[0],
-  );
+  const [selectedLang, setSelectedLang] = useState<any>(LANGUAGE_OPTIONS[0]);
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('system');
   const [currentDensity, setCurrentDensity] = useState<
     'comfortable' | 'compact'
@@ -699,11 +693,11 @@ export default function GlobalHeader() {
   const areaClassName = getAreaClass(userData?.areaName);
   const tabText = userData?.areaName || 'General';
 
+  // 🚩 NUEVO MANEJADOR DE LOGOUT DE AWS (Sincronizado)
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Previene doble clic
+    if (isLoggingOut) return;
     setIsLoggingOut(true);
 
-    // 1. Mostrar estado de carga (Cloudscape spinner en el Flashbar)
     const alertId = addAlert
       ? addAlert(
           'info',
@@ -715,36 +709,12 @@ export default function GlobalHeader() {
       : undefined;
 
     try {
-      if (backendUrl) {
-        axios.defaults.withCredentials = true;
-        const { data } = await axios.post(`${backendUrl}/api/auth/logout`);
+      // PAUSA ESTÉTICA DE 1 SEGUNDO (Permite ver el spinner de carga para buena UX)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        if (data.success && setIsLoggedin && setUserData) {
-          // PAUSA ESTÉTICA DE 1 SEGUNDO (Permite ver el spinner de carga)
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          setIsLoggedin(false);
-          setUserData(null);
-          // 2. Transición a éxito (Checkmark)
-          if (addAlert)
-            addAlert(
-              'success',
-              'Sesión terminada. ¡Hasta pronto!',
-              'Desconectado',
-              alertId,
-              false,
-            );
-          navigate('/');
-        } else {
-          if (addAlert)
-            addAlert(
-              'warning',
-              'No se pudo cerrar la sesión completamente.',
-              'Advertencia',
-              alertId,
-              false,
-            );
-        }
+      // Llama a la función del Contexto que destruye la sesión y avisa a las otras pestañas
+      if (executeGlobalLogout) {
+        await executeGlobalLogout();
       }
     } catch (error: any) {
       if (addAlert)
@@ -882,7 +852,9 @@ export default function GlobalHeader() {
             <div className="sp-section-label">Idioma</div>
             <Select
               selectedOption={selectedLang}
-              onChange={({ detail }) => setSelectedLang(detail.selectedOption)}
+              onChange={({ detail }) =>
+                setSelectedLang(detail.selectedOption as any)
+              }
               options={LANGUAGE_OPTIONS}
             />
           </div>
@@ -900,7 +872,7 @@ export default function GlobalHeader() {
                   <span>Predeterminado</span>
                 </div>
                 <div className="sp-icon-right">
-                  <Icon name="monitor" />
+                  <Icon name={'monitor' as any} />
                 </div>
               </div>
               <div
@@ -912,7 +884,7 @@ export default function GlobalHeader() {
                   <span>Claro</span>
                 </div>
                 <div className="sp-icon-right">
-                  <Icon name="gen-ai" />
+                  <Icon name={'gen-ai' as any} />
                 </div>
               </div>
               <div
@@ -924,7 +896,7 @@ export default function GlobalHeader() {
                   <span>Oscuro</span>
                 </div>
                 <div className="sp-icon-right">
-                  <Icon name="star" />
+                  <Icon name={'star' as any} />
                 </div>
               </div>
             </div>
@@ -941,7 +913,7 @@ export default function GlobalHeader() {
                   <span>Densidad cómoda</span>
                 </div>
                 <div className="sp-icon-right">
-                  <Icon name="view-full" />
+                  <Icon name={'view-full' as any} />
                 </div>
               </div>
               <div
@@ -953,7 +925,7 @@ export default function GlobalHeader() {
                   <span>Densidad compacta</span>
                 </div>
                 <div className="sp-icon-right">
-                  <Icon name="view-vertical" />
+                  <Icon name={'view-vertical' as any} />
                 </div>
               </div>
             </div>
@@ -995,7 +967,7 @@ export default function GlobalHeader() {
                   className="um-copy-btn"
                   onClick={() => copyToClipboard(String(displayId))}
                 >
-                  <Icon name="copy" />
+                  <Icon name={'copy' as any} />
                 </button>
                 <span>{displayId}</span>
               </div>
@@ -1007,7 +979,7 @@ export default function GlobalHeader() {
                   className="um-copy-btn"
                   onClick={() => copyToClipboard(displayName)}
                 >
-                  <Icon name="copy" />
+                  <Icon name={'copy' as any} />
                 </button>
                 <span>{displayName}</span>
               </div>
@@ -1015,7 +987,7 @@ export default function GlobalHeader() {
             <div className="um-header-row">
               <div className="um-label">Rol del usuario</div>
               <div className="um-value-row">
-                <Icon name="user-profile" variant="subtle" />
+                <Icon name={'user-profile' as any} variant="subtle" />
                 <span style={{ marginLeft: 6 }}>{displayRole}</span>
               </div>
             </div>
@@ -1041,7 +1013,7 @@ export default function GlobalHeader() {
                 className="um-link-item um-link-warning"
                 onClick={handleSendVerification}
               >
-                <Icon name="status-warning" />
+                <Icon name={'status-warning' as any} />
                 <span style={{ marginLeft: 8 }}>Verificar cuenta</span>
               </div>
             )}
@@ -1179,20 +1151,20 @@ export default function GlobalHeader() {
         utilities={[
           {
             type: 'button',
-            iconName: 'settings',
+            iconName: 'settings' as any,
             ariaLabel: 'Ajustes',
             title: 'Configuración',
             onClick: () => {
               setIsUserMenuOpen(false);
               setIsSettingsOpen(!isSettingsOpen);
             },
-          },
+          } as any,
           {
             type: 'button',
             text: userData ? userData.name : 'Invitado',
             description:
               isLoggedin && userData ? userData.email : 'Iniciar sesión',
-            iconName: 'user-profile',
+            iconName: 'user-profile' as any,
             ariaLabel: 'Menú de usuario',
             onClick: () => {
               if (!isLoggedin) {
@@ -1202,7 +1174,7 @@ export default function GlobalHeader() {
                 setIsUserMenuOpen(!isUserMenuOpen);
               }
             },
-          },
+          } as any,
         ]}
       />
     </div>
