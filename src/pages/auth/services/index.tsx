@@ -14,10 +14,10 @@ import GlobalSidebar from '@/components/layouts/AppSidebar';
 import SecondaryHeader from '@/components/layouts/BreadcrumbNavBar';
 import { Footer } from '@/components/layouts/AppFooter';
 
-import iconAlmacen from '@/assets/services/AI.svg';
-import iconMantenimiento from '@/assets/services/AI.svg';
-import iconAI from '@/assets/services/AI.svg';
-import iconAdmin from '@/assets/services/AI.svg';
+import iconAlmacen from '@/assets/services/ai.svg';
+import iconMantenimiento from '@/assets/services/ai.svg';
+import iconAI from '@/assets/services/ai.svg';
+import iconAdmin from '@/assets/services/ai.svg';
 
 const styles = `
   .aws-category-header {
